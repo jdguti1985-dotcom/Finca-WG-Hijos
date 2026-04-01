@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WG e Hijos - Sistema Lechero</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { --primary-color: #1e8f62; --bg-color: #f4f7f6; --text-size: 16px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; font-size: var(--text-size); }
+        header { background-color: var(--primary-color); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        nav { background: #fff; display: flex; overflow-x: auto; border-bottom: 1px solid #ddd; }
+        nav button { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; color: #666; font-size: 13px; white-space: nowrap; }
+        nav button.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); font-weight: bold; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-main { background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-photo { background: #f0f0f0; border: 1px solid #ddd; padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div><strong>WG e Hijos</strong><br><small id="fecha-hoy"></small></div>
+    <div style="text-align:right"><strong>487 L</strong><br><small>Cierre hoy</small></div>
+</header>
+
+<nav>
+    <button class="active" onclick="showTab('hato')">Hato</button>
+    <button onclick="showTab('vete')">Veterinaria</button>
+    <button onclick="showTab('bajas')">Bajas</button>
+    <button onclick="showTab('config')">Config</button>
+</nav>
+
+<div class="container" id="main-content">
+    
+    <div id="tab-hato">
+        <div class="card">
+            <h3>Agregar animal al hato</h3>
+            <div class="form-row">
+                <div><label>Nombre</label><input type="text" id="reg_nombre" placeholder="Ej: Lucera"></div>
+                <div><label>Arete / ID</label><input type="text" id="reg_arete" placeholder="Ej: CR-2045"></div>
+            </div>
+            <div class="form-row">
+                <div><label>Raza</label><select id="reg_raza"><option>Jersey</option><option>Holstein</option><option>Pardo Suizo</option></select></div>
+                <div><label>Estado</label><select id="reg_estado"><option>Activa</option><option>Lactante</option><option>Preñada</option></select></div>
+            </div>
+            <div class="form-row">
+                <div><label>N° partos</label><input type="number" id="reg_partos" value="0"></div>
+                <div><label>Peso (kg)</label><input type="number" id="reg_peso" placeholder="Ej: 450"></div>
+            </div>
+            <label>Foto del animal</label>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-photo"><i class="fas fa-camera"></i> Tomar foto</button>
+                <button class="btn-photo"><i class="fas fa-upload"></i> Subir foto</button>
+            </div>
+            <button class="btn-main" onclick="guardarHato()">Guardar Animal</button>
+        </div>
+    </div>
+
+    <div id="tab-vete" style="display:none;">
+        <div class="card">
+            <h3>Registro veterinario</h3>
+            <div class="form-row">
+                <div><label>Fecha</label><input type="date" id="vet_fecha"></div>
+                <div><label>Tipo</label><select id="vet_tipo"><option>Vacuna</option><option>Tratamiento</option></select></div>
+            </div>
+            <label>Animal tratado</label>
+            <select id="vet_animal"><option>Todo el Hato</option></select>
+            <label>Medicamento</label>
+            <input type="text" id="vet_med" placeholder="Ej: Oxitocina, Penicilina...">
+            <div class="form-row">
+                <div><label>Dosis</label><input type="text" id="vet_dosis" placeholder="Ej: 5 ml"></div>
+                <div><label>Vía</label><select id="vet_via"><option>IM — Intramuscular</option><option>IV — Intravenosa</option></select></div>
+            </div>
+            <button class="btn-main" onclick="guardarVeterinaria()">Guardar Registro</button>
+        </div>
+    </div>
+
+    <div id="tab-bajas" style="display:none;">
+        <div class="card">
+            <h3>Dar de baja animal</h3>
+            <label>Animal</label>
+            <select id="baja_animal"></select>
+            <div class="form-row">
+                <div><label>Motivo</label>
+                    <select id="baja_motivo">
+                        <option>Muerte natural</option><option>Sacrificio</option>
+                        <option>Venta</option><option>Robo</option><option>Pérdida</option>
+                    </select>
+                </div>
+                <div><label>Fecha</label><input type="date" id="baja_fecha"></div>
+            </div>
+            <button class="btn-main" style="background:#c62828;" onclick="confirmarBaja()">Dar de baja</button>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAISQ_p-BFAS4zdvYKSlAMUGf84cGfEQLM",
+        authDomain: "wg-e-hijos.firebaseapp.com",
+        projectId: "wg-e-hijos",
+        storageBucket: "wg-e-hijos.firebasestorage.app",
+        messagingSenderId: "972986421575",
+        appId: "1:972986421575:web:5317769e38e6e580e06001"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.showTab = (tab) => {
+        document.querySelectorAll('.container > div').forEach(d => d.style.display = 'none');
+        document.getElementById('tab-' + tab).style.display = 'block';
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    };
+
+    window.guardarHato = async () => {
+        const data = {
+            nombre: document.getElementById('reg_nombre').value,
+            arete: document.getElementById('reg_arete').value,
+            raza: document.getElementById('reg_raza').value,
+            peso: document.getElementById('reg_peso').value,
+            fechaRegistro: new Date()
+        };
+        await addDoc(collection(db, "hato"), data);
+        alert("¡Vaca registrada con éxito en la nube!");
+    };
+
+    document.getElementById('fecha-hoy').innerText = new Date().toLocaleDateString();
+</script>
+
+</body>
+</html>

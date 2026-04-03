@@ -1,108 +1,111 @@
-# 📱 WG e Hijos — Guía de instalación
+# WG e Hijos — Guía de instalación con Firebase
 
 ## Archivos incluidos
 
 | Archivo | Descripción |
 |---|---|
-| `index.html` | La aplicación completa |
-| `manifest.json` | Configuración de la app (nombre, ícono, color) |
-| `sw.js` | Service Worker — permite uso sin internet |
-| `icon-192.png` | Ícono WG establo (Android / Chrome) |
-| `icon-512.png` | Ícono WG establo (pantalla de carga) |
-| `apple-touch-icon.png` | Ícono WG establo (iPhone / iPad) |
+| `index.html` | La app completa con login y sincronización |
+| `manifest.json` | Configuración de la app |
+| `sw.js` | Service Worker — funciona sin internet |
+| `icon-192.png` `icon-512.png` `apple-touch-icon.png` | Íconos WG |
 
 ---
 
-## PASO 1 — Crear el repositorio en GitHub (solo una vez)
+## PASO 1 — Crear proyecto Firebase (gratis)
 
-1. Ve a **github.com** e inicia sesión con tu cuenta `jdguti1985-dotcom`
-2. Haz clic en el botón verde **"New"** (o el ícono ➕)
-3. En *Repository name* escribe: `WG-e-Hijos` (sin espacios)
-4. Asegúrate de que esté en **"Public"**
-5. Haz clic en **"Create repository"**
+1. Ve a **console.firebase.google.com** → inicia sesión con Google
+2. **"Crear un proyecto"** → nombre: `wg-e-hijos` → desactiva Analytics → **"Crear proyecto"**
+
+### Activar login por correo
+1. Menú izquierdo → **Build → Authentication → "Get started"**
+2. Pestaña **"Sign-in method"** → **"Email/Password"** → activa el switch → **"Save"**
+
+### Crear base de datos Firestore
+1. Menú izquierdo → **Build → Firestore Database → "Create database"**
+2. Selecciona **"Production mode"** → elige región `us-central1` → **"Enable"**
+
+### Configurar reglas de seguridad
+En Firestore → pestaña **"Rules"** → borra todo y pega:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /fincas/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /configs/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+→ Clic en **"Publish"**
+
+### Obtener credenciales
+1. Ícono ⚙️ → **"Project settings"** → sección **"Your apps"**
+2. Clic en **"</>"** → nombre: `wg-hijos-web` → **"Register app"**
+3. Copia el bloque `firebaseConfig` que aparece
 
 ---
 
-## PASO 2 — Subir los 6 archivos
+## PASO 2 — Pegar credenciales en index.html
 
-1. En el repositorio recién creado, haz clic en **"uploading an existing file"**
-2. Arrastra los **6 archivos** de esta carpeta al área de carga
-3. En el cuadro de mensaje escribe: `Primera versión WG e Hijos`
-4. Haz clic en **"Commit changes"** (botón verde)
+Abre `index.html` con Bloc de notas (Windows) o TextEdit (Mac).
+Busca este bloque y reemplaza los valores:
+
+```javascript
+var FB_CFG = {
+  apiKey:            "PEGA_TU_apiKey_AQUI",
+  authDomain:        "PEGA_TU_authDomain_AQUI",
+  projectId:         "PEGA_TU_projectId_AQUI",
+  storageBucket:     "PEGA_TU_storageBucket_AQUI",
+  messagingSenderId: "PEGA_TU_messagingSenderId_AQUI",
+  appId:             "PEGA_TU_appId_AQUI"
+};
+```
+
+Guarda el archivo.
 
 ---
 
-## PASO 3 — Activar GitHub Pages
+## PASO 3 — Subir a GitHub
 
-1. Ve a la pestaña **Settings** del repositorio
-2. En el menú izquierdo busca **"Pages"**
-3. En *Source* selecciona **"Deploy from a branch"**
-4. En *Branch* selecciona **"main"** y la carpeta **"/ (root)"**
-5. Haz clic en **"Save"**
+1. github.com → repositorio **WG-e-Hijos** → **"Add file → Upload files"**
+2. Arrastra los 6 archivos → **"Commit changes"**
 
-⏳ Espera **2-3 minutos**. Tu app estará disponible en:
+URL de tu app:
 ```
 https://jdguti1985-dotcom.github.io/WG-e-Hijos/
 ```
 
 ---
 
-## PASO 4 — Instalar en iPhone (para cada familiar)
+## PASO 4 — Instalar en iPhone
 
-1. **Abre Safari** en el iPhone ⚠️ debe ser Safari, no Chrome
-2. Ve a:
-   ```
-   https://jdguti1985-dotcom.github.io/WG-e-Hijos/
-   ```
-3. Espera que la app cargue completamente
-4. Toca el botón **Compartir** ⬆ (abajo en Safari)
-5. Desplázate y toca **"Agregar a pantalla de inicio"**
-6. Ponle el nombre que quieras y toca **"Agregar"**
-
-✅ El ícono del establo con las letras **WG** aparecerá en la pantalla de inicio.
+1. Abre **Safari** → ve a la URL
+2. Toca **Compartir ⬆** → **"Agregar a pantalla de inicio"** → **"Agregar"**
+3. En la primera apertura: toca **"Registrarse"** y crea tu cuenta
 
 ---
 
-## PASO 5 — Instalar en Mac
+## Compartir con familiares
 
-1. Abre **Safari** en tu Mac
-2. Ve a la URL de la app
-3. Menú Safari → **Archivo → Agregar al Dock** (macOS Sonoma o superior)
-4. O: ícono **Compartir** ⬆ → **"Agregar al Dock"**
+Cada familiar instala la app en su iPhone y se registra con su correo.
+Para que **todos compartan los mismos datos**: usar el **mismo correo y contraseña** en todos los dispositivos.
 
 ---
 
-## ¿Cómo funciona sin internet?
+## Funciones nuevas
 
-Una vez que cada familiar abra la app **al menos una vez** con internet:
+**Botón ⚙️ (engranaje arriba a la derecha):**
+- Nombre e información de la finca
+- 4 temas de color: Verde, Azul, Café, Gris oscuro
+- Modo oscuro para usar de noche
+- Tamaño de letra: Normal / Grande / Muy grande
+- Estado de sincronización Firebase
 
-- ✅ Funciona completamente sin conexión
-- ✅ Los datos se guardan en el dispositivo
-- ✅ Con internet se actualiza automáticamente si publicas una versión nueva
-
----
-
-## Respaldo de datos
-
-En la sección **"Reportes"** puedes:
-- **Exportar PDF** — elige la sección o exporta todo
-- **Exportar Excel** — descarga un .csv que abre Numbers o Excel
-- **Respaldo JSON** — guarda todo en iCloud o WhatsApp
-- **Importar JSON** — restaura un respaldo anterior
-
----
-
-## ❓ Preguntas frecuentes
-
-**¿Los datos se comparten entre los iPhone?**
-No automáticamente. Cada iPhone tiene sus propios datos. Para compartir, descarga el JSON en un dispositivo y envíalo por WhatsApp al otro.
-
-**¿Se puede cambiar el nombre "WG e Hijos"?**
-Sí. Edita el archivo `index.html` en GitHub y busca "WG e Hijos". Cámbialo y guarda.
-
-**¿Funciona en Android?**
-Sí, con Chrome. Menú ⋮ → "Instalar app" o "Agregar a pantalla de inicio".
-
----
-
-*Desarrollado para WG e Hijos*
+**Sincronización automática:**
+- Cada cambio se guarda en Firebase al instante
+- Todos los dispositivos de la misma cuenta se actualizan en tiempo real
+- El punto verde en el tablero indica conexión activa

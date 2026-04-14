@@ -263,6 +263,38 @@
 
     /* ===== SVG CHART ===== */
     .svg-chart { display:block; width:100%; overflow:visible; }
+
+    /* ===== DASHBOARD KPI CARDS ===== */
+    .dash-kpi { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:10px; padding:12px 10px; text-align:center; cursor:pointer; transition:transform .1s; }
+    .dash-kpi:active { transform:scale(.96); }
+    .dash-kpi-val { font-size:26px; font-weight:800; color:var(--color-text-primary); line-height:1; margin-bottom:4px; }
+    .dash-kpi-lbl { font-size:10px; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:.04em; }
+    .dash-kpi-green  { border-left:3px solid #1D9E75; }
+    .dash-kpi-green  .dash-kpi-val { color:#1D9E75; }
+    .dash-kpi-blue   { border-left:3px solid #2563EB; }
+    .dash-kpi-blue   .dash-kpi-val { color:#2563EB; }
+    .dash-kpi-amber  { border-left:3px solid #D97706; }
+    .dash-kpi-amber  .dash-kpi-val { color:#D97706; }
+    .dash-kpi-purple { border-left:3px solid #7C3AED; }
+    .dash-kpi-purple .dash-kpi-val { color:#7C3AED; }
+    .dash-kpi-teal   { border-left:3px solid #0891B2; }
+    .dash-kpi-teal   .dash-kpi-val { color:#0891B2; }
+
+    /* ranking bars */
+    .rank-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+    .rank-name { font-size:12px; font-weight:500; color:var(--color-text-primary); min-width:80px; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rank-bar-wrap { flex:1; background:var(--color-background-tertiary); border-radius:99px; height:7px; }
+    .rank-bar { height:7px; border-radius:99px; transition:width .4s; }
+    .rank-val { font-size:11px; font-weight:600; color:var(--color-text-secondary); min-width:38px; text-align:right; }
+
+    /* parto resultado badges */
+    .parto-badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:600; }
+    .parto-normal  { background:#EAF3DE; color:#27500A; }
+    .parto-dificil { background:#FFF0D0; color:#633806; }
+    .parto-aborto  { background:#FCEBEB; color:#791F1F; }
+    .parto-muerto  { background:#F1EFE8; color:#444441; }
+    .parto-cesarea { background:#E3F0FB; color:#0C447C; }
+
   </style>
 
   <script>
@@ -335,109 +367,100 @@
   <!-- ===== CONTENIDO ===== -->
   <div class="content">
 
-    <!-- ===== TABLERO (DASHBOARD) ===== -->
+    <!-- ===== TABLERO (DASHBOARD PROFESIONAL) ===== -->
     <div class="section active" id="sec-tablero">
-      <div class="dash-greeting">Bienvenido 👋</div>
-      <div class="dash-fecha" id="dash-fecha-turno"></div>
 
-      <!-- HATO stats -->
-      <div class="dash-section-label">🐄 HATO</div>
-      <div class="dash-card-grid">
-        <div class="hato-card dash-card dash-card-green" onclick="showSection('hato',document.querySelector('.nav-btn:nth-child(2)'))">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="32" cy="38" rx="18" ry="12" fill="#16a34a" opacity=".2"/>
-            <ellipse cx="32" cy="36" rx="14" ry="9" fill="#15803d" opacity=".3"/>
-            <circle cx="22" cy="26" r="6" fill="#15803d" opacity=".5"/>
-            <circle cx="42" cy="26" r="6" fill="#15803d" opacity=".5"/>
-            <path d="M20 22 Q18 16 14 16" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <path d="M44 22 Q46 16 50 16" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          </svg>
-          <div class="dash-card-val" id="dash-total">—</div>
-          <div class="dash-card-lbl">Total animales</div>
-        </div>
-        <div class="hato-card dash-card dash-card-green" onclick="showSection('hato',document.querySelector('.nav-btn:nth-child(2)'))">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="20" fill="#15803d" opacity=".2"/>
-            <text x="32" y="38" text-anchor="middle" font-size="22" fill="#15803d" font-weight="800" opacity=".8">🐄</text>
-          </svg>
-          <div class="dash-card-val" id="dash-activas">—</div>
-          <div class="dash-card-lbl">Activas</div>
-        </div>
-        <div class="hato-card dash-card dash-card-amber" onclick="showSection('hato',document.querySelector('.nav-btn:nth-child(2)'))">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="20" fill="#d97706" opacity=".2"/>
-            <text x="32" y="38" text-anchor="middle" font-size="22" fill="#d97706" font-weight="800" opacity=".8">🤰</text>
-          </svg>
-          <div class="dash-card-val" id="dash-prenadas">—</div>
-          <div class="dash-card-lbl">Preñadas</div>
-        </div>
-        <div class="hato-card dash-card dash-card-blue" onclick="showSection('hato',document.querySelector('.nav-btn:nth-child(2)'))">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="20" fill="#2563eb" opacity=".15"/>
-            <text x="32" y="38" text-anchor="middle" font-size="22" fill="#2563eb" font-weight="800" opacity=".8">😴</text>
-          </svg>
-          <div class="dash-card-val" id="dash-secas">—</div>
-          <div class="dash-card-lbl">Secas</div>
-        </div>
-        <div class="hato-card dash-card dash-card-green">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="20" fill="#15803d" opacity=".15"/>
-            <text x="32" y="38" text-anchor="middle" font-size="22" fill="#15803d" opacity=".8">🐮</text>
-          </svg>
-          <div class="dash-card-val" id="dash-lactantes">—</div>
-          <div class="dash-card-lbl">Lactantes</div>
-        </div>
-        <div class="hato-card dash-card dash-card-amber">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="20" fill="#d97706" opacity=".15"/>
-            <text x="32" y="38" text-anchor="middle" font-size="22" fill="#d97706" opacity=".8">🐄</text>
-          </svg>
-          <div class="dash-card-val" id="dash-novillas">—</div>
-          <div class="dash-card-lbl">Novillas</div>
-        </div>
-      </div>
+      <!-- Saludo y turno -->
+      <div style="padding:14px 14px 0">
+        <div style="font-size:18px;font-weight:700;color:var(--color-text-primary)" id="dash-greeting-txt">Bienvenido 👋</div>
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px" id="dash-fecha-turno"></div>
 
-      <!-- Sección LECHE -->
-      <div class="dash-section-label">🥛 PRODUCCIÓN</div>
-      <div class="dash-card-grid">
-        <div class="dash-card dash-card-blue" onclick="showSection('produccion',document.querySelector('.nav-btn:nth-child(4)'))">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="32" cy="32" r="10" fill="#fbbf24" opacity=".7"/>
-            <line x1="32" y1="16" x2="32" y2="20" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="32" y1="44" x2="32" y2="48" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="16" y1="32" x2="20" y2="32" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="44" y1="32" x2="48" y2="32" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M24 36 L26 50 L38 50 L40 36Z" fill="#2563eb" opacity=".5"/>
-            <rect x="23" y="33" width="18" height="4" rx="2" fill="#1d4ed8" opacity=".6"/>
-            <path d="M27 33 Q32 28 37 33" stroke="#60a5fa" stroke-width="1.5" fill="none"/>
-            <path d="M27 42 Q30 40 33 42 Q36 44 39 42" stroke="#bfdbfe" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-          </svg>
-          <div class="dash-card-val" id="dash-litros-hoy">— L</div>
-          <div class="dash-card-lbl">Litros hoy</div>
+        <!-- KPIs fila 1: hato -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+          <div class="dash-kpi" onclick="showSection('hato',document.querySelectorAll('.nav-btn')[1])">
+            <div class="dash-kpi-val" id="dk-total">—</div>
+            <div class="dash-kpi-lbl">Total animales</div>
+          </div>
+          <div class="dash-kpi dash-kpi-green" onclick="showSection('hato',document.querySelectorAll('.nav-btn')[1])">
+            <div class="dash-kpi-val" id="dk-activas">—</div>
+            <div class="dash-kpi-lbl">Activas</div>
+          </div>
+          <div class="dash-kpi dash-kpi-blue" onclick="showSection('hato',document.querySelectorAll('.nav-btn')[1])">
+            <div class="dash-kpi-val" id="dk-lactantes">—</div>
+            <div class="dash-kpi-lbl">Lactantes</div>
+          </div>
         </div>
-        <div class="dash-card dash-card-green">
-          <svg class="dash-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="14" y="18" width="36" height="32" rx="5" fill="#16a34a" opacity=".3"/>
-            <rect x="14" y="18" width="36" height="10" rx="5 5 0 0" fill="#15803d" opacity=".5"/>
-            <text x="32" y="42" text-anchor="middle" font-size="16" fill="#15803d" font-weight="800" opacity=".8">₡</text>
-            <rect x="20" y="32" width="8" height="2" rx="1" fill="#15803d" opacity=".4"/>
-            <rect x="20" y="36" width="12" height="2" rx="1" fill="#15803d" opacity=".4"/>
-          </svg>
-          <div class="dash-card-val" id="dash-litros-mes">— L</div>
-          <div class="dash-card-lbl">Litros este mes</div>
+
+        <!-- KPIs fila 2 -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+          <div class="dash-kpi dash-kpi-amber">
+            <div class="dash-kpi-val" id="dk-secas">—</div>
+            <div class="dash-kpi-lbl">Secas</div>
+          </div>
+          <div class="dash-kpi dash-kpi-purple">
+            <div class="dash-kpi-val" id="dk-prenadas">—</div>
+            <div class="dash-kpi-lbl">Preñadas</div>
+          </div>
+          <div class="dash-kpi dash-kpi-teal">
+            <div class="dash-kpi-val" id="dk-nacimientos">—</div>
+            <div class="dash-kpi-lbl">Nacimientos</div>
+          </div>
         </div>
-      </div>
 
-      <!-- Gráfico producción -->
-      <div class="chart-wrap">
-        <div class="chart-title">Producción últimos 7 días (litros)</div>
-        <div class="bar-chart" style="height:120px" id="main-chart"></div>
-      </div>
+        <!-- Producción hoy + mes -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="background:var(--accent);border-radius:12px;padding:14px;cursor:pointer" onclick="showSection('produccion',document.querySelectorAll('.nav-btn')[3])">
+            <div style="font-size:10px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Producción hoy</div>
+            <div style="font-size:28px;font-weight:800;color:#fff;line-height:1" id="dk-prod-hoy">— L</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px" id="dk-prod-trend"></div>
+          </div>
+          <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;cursor:pointer" onclick="showSection('produccion',document.querySelectorAll('.nav-btn')[3])">
+            <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Este mes</div>
+            <div style="font-size:22px;font-weight:700;color:var(--accent);line-height:1" id="dk-prod-mes">— L</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px" id="dk-lvd">— L/vaca/día</div>
+          </div>
+        </div>
 
-      <!-- Top 5 -->
-      <div class="chart-wrap">
-        <div class="chart-title">Top 5 vacas productoras hoy</div>
-        <div id="top5"></div>
+        <!-- Gráfico 7 días -->
+        <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;color:var(--color-text-primary)">📈 Producción — últimos 7 días</div>
+            <div style="font-size:11px;color:var(--color-text-secondary)" id="dk-chart-avg"></div>
+          </div>
+          <div class="bar-chart" style="height:100px" id="main-chart"></div>
+        </div>
+
+        <!-- Mejores y peores productoras -->
+        <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:var(--color-text-primary);margin-bottom:10px">🏆 Ranking de producción</div>
+          <div style="font-size:11px;font-weight:600;color:#27500A;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Top 3 mejores</div>
+          <div id="dash-top3"></div>
+          <div style="border-top:0.5px solid var(--color-border-tertiary);margin:10px 0"></div>
+          <div style="font-size:11px;font-weight:600;color:#791F1F;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Menor producción</div>
+          <div id="dash-bottom3"></div>
+        </div>
+
+        <!-- Vacas más enfermas -->
+        <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:var(--color-text-primary);margin-bottom:10px">💊 Historial de salud — más tratamientos</div>
+          <div id="dash-enfermas"><div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:12px 0">Sin registros veterinarios aún</div></div>
+        </div>
+
+        <!-- Últimos nacimientos -->
+        <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;color:var(--color-text-primary)">🐣 Últimos nacimientos</div>
+            <button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="openModal('modal-parto')">+ Registrar</button>
+          </div>
+          <div id="dash-nacimientos"><div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:12px 0">Sin nacimientos registrados</div></div>
+        </div>
+
+        <!-- Vacas secas — alertas -->
+        <div style="background:#FFF0D0;border:1px solid #F5C842;border-radius:12px;padding:14px;margin-bottom:14px" id="dash-secas-box">
+          <div style="font-size:13px;font-weight:600;color:#633806;margin-bottom:8px">⚠️ Vacas secas actualmente</div>
+          <div id="dash-secas-list"><div style="font-size:12px;color:#856404">No hay vacas secas registradas</div></div>
+        </div>
+
       </div>
     </div><!-- /sec-tablero -->
 
@@ -445,9 +468,17 @@
     <div class="section" id="sec-hato">
       <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
         <div class="section-title" style="margin:0">Registro del hato</div>
-        <button class="btn btn-primary" onclick="openModal('modal-addcow')">+ Agregar</button>
+        <div class="row" style="gap:6px">
+          <button class="btn btn-primary" style="font-size:12px;padding:7px 12px" onclick="openModal('modal-parto')">🐣 Parto</button>
+          <button class="btn btn-primary" style="font-size:12px;padding:7px 12px" onclick="openModal('modal-addcow')">+ Animal</button>
+        </div>
       </div>
-      <input class="form-input" placeholder="Buscar por nombre o arete…" oninput="filterCows(this.value)" style="margin-bottom:12px">
+      <input class="form-input" placeholder="Buscar por nombre o arete…" oninput="filterCows(this.value)" style="margin-bottom:8px">
+      <!-- Historial partos -->
+      <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🐣 Historial de partos</div>
+        <div id="partos-list-hato"><div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin partos registrados</div></div>
+      </div>
       <div class="cow-grid" id="cow-grid"></div>
     </div>
 
@@ -900,6 +931,64 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
   </div>
 </div>
 
+<!-- Modal Registrar Parto / Nacimiento -->
+<div class="modal-bg" id="modal-parto">
+  <div class="modal">
+    <div class="modal-title">🐣 Registrar Parto / Nacimiento</div>
+    <div class="form-group">
+      <label class="form-label">Vaca madre</label>
+      <select class="form-input" id="parto-vaca"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha del parto</label>
+        <input class="form-input" type="date" id="parto-fecha">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Resultado</label>
+        <select class="form-input" id="parto-resultado">
+          <option value="normal">✅ Parto normal</option>
+          <option value="dificil">⚠️ Parto difícil</option>
+          <option value="aborto">❌ Aborto</option>
+          <option value="muerto">💀 Nacido muerto</option>
+          <option value="cesarea">🏥 Cesárea</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" id="parto-cria-fields">
+      <div class="form-group">
+        <label class="form-label">Sexo de la cría</label>
+        <select class="form-input" id="parto-sexo">
+          <option value="hembra">🐄 Hembra</option>
+          <option value="macho">🐂 Macho</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Peso cría (kg)</label>
+        <input class="form-input" type="number" id="parto-peso-cria" placeholder="Ej: 35" step="0.5" min="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Peso madre post-parto (kg)</label>
+        <input class="form-input" type="number" id="parto-peso-madre" placeholder="Ej: 420" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Atendido por</label>
+        <input class="form-input" id="parto-atencion" placeholder="Nombre / Veterinario">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observaciones</label>
+      <textarea class="form-input" id="parto-obs" rows="2" placeholder="Complicaciones, tratamientos, notas…" style="resize:vertical"></textarea>
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px;margin-bottom:0">
+      <button class="btn" onclick="closeModal('modal-parto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveParto()">💾 Guardar Parto</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -940,7 +1029,7 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
     unsubListeners = [];
     await signOut(auth);
     closeModal('modal-user');
-    cows = []; lecheReg = []; vetReg = []; bajas = []; entregas = [];
+    cows = []; lecheReg = []; vetReg = []; bajas = []; entregas = []; partos = [];
   };
 
   onAuthStateChanged(auth, user => {
@@ -1013,6 +1102,13 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
           setSyncBadge('ok', 'En línea');
         },
         err => { setSyncBadge('error', 'Error'); onErr('entregas', err); }
+      ),
+      onSnapshot(col('partos'),
+        snap => {
+          partos = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.fecha.localeCompare(a.fecha));
+          renderPartos(); renderMainDash();
+        },
+        err => onErr('partos', err)
       )
     ];
     unsubListeners.push(...subs);
@@ -1071,6 +1167,13 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
     await setDoc(docRef('entregas', id), reg);
   };
   window.fbDeleteEntrega = async function (id) { await deleteDoc(docRef('entregas', String(id))); };
+  window.fbAddParto = async function (reg) {
+    setSyncBadge('syncing','Guardando…');
+    try {
+      await addDoc(col('partos'), reg);
+      setSyncBadge('ok','En línea');
+    } catch(e) { setSyncBadge('error','Error'); throw e; }
+  };
   window.fbUpdateCowBaja = async function (cowName) {
     try {
       var cowsSnap = await getDocs(col('cows'));
@@ -1103,7 +1206,7 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
 
 <script>
   /* ===== DATOS EN MEMORIA ===== */
-  var cows = [], lecheReg = [], vetReg = [], bajas = [], entregas = [];
+  var cows = [], lecheReg = [], vetReg = [], bajas = [], entregas = [], partos = [];
 
   /* ===== CONFIGURACIÓN ===== */
   var CFG_KEY = 'finca-config';
@@ -1187,36 +1290,173 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
     el.style.color=diff>=0?'var(--accent)':'#EF4444';
   }
 
-  /* ===== DASHBOARD ===== */
+  /* ===== DASHBOARD PROFESIONAL ===== */
   function renderMainDash() {
-    var vals7=entregas.slice(0,7).map(e=>e.litros).reverse();
-    var lbls7=entregas.slice(0,7).map(e=>e.fecha.slice(5)).reverse();
-    renderBarChart('main-chart',vals7,lbls7,'var(--accent)',120,true);
-    var sorted=[...cows].filter(c=>c.litros>0).sort((a,b)=>b.litros-a.litros).slice(0,5);
-    var maxL=sorted[0]?sorted[0].litros:1;
-    var top5=document.getElementById('top5'); if(top5)
-      top5.innerHTML=sorted.map(c=>'<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:500;color:var(--color-text-primary)">'+c.name+'</span><span style="color:var(--color-text-secondary)">'+c.litros.toFixed(1)+' L</span></div><div style="background:var(--color-background-tertiary);border-radius:99px;height:6px"><div style="width:'+Math.round(c.litros/maxL*100)+'%;background:var(--accent);height:6px;border-radius:99px"></div></div></div>').join('');
-    var activas=cows.filter(c=>c.estado==='Activa').length;
-    var secas=cows.filter(c=>c.estado==='Seca').length;
-    var prenadas=cows.filter(c=>c.estado==='Preñada').length;
-    var lactantes=cows.filter(c=>c.estado==='Lactante').length;
-    var novillas=cows.filter(c=>c.tipo==='Novilla').length;
-    var total=cows.filter(c=>c.estado!=='Baja').length;
-    var hoy=entregas[0]?entregas[0].litros:0;
-    var mesTotal=entregas.reduce((a,e)=>a+e.litros,0);
+    // Fecha y turno
+    var now = new Date();
+    var dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    var meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    var h = now.getHours();
+    var turno = h<12 ? '☀️ Ordeño matutino' : h<18 ? '🌤️ Ordeño vespertino' : '🌙 Cierre del día';
+    var dt = document.getElementById('dash-fecha-turno');
+    if (dt) dt.textContent = dias[now.getDay()] + ' ' + now.getDate() + ' ' + meses[now.getMonth()] + ' · ' + turno;
+
+    var activas   = cows.filter(c=>c.estado==='Activa').length;
+    var secas     = cows.filter(c=>c.estado==='Seca').length;
+    var prenadas  = cows.filter(c=>c.estado==='Preñada').length;
+    var lactantes = cows.filter(c=>c.estado==='Lactante').length;
+    var total     = cows.filter(c=>c.estado!=='Baja').length;
+    var nacimientos = partos.filter(p=>p.resultado==='normal'||p.resultado==='dificil'||p.resultado==='cesarea').length;
+
     var el;
-    el=document.getElementById('dash-activas'); if(el) el.textContent=activas;
-    el=document.getElementById('dash-secas'); if(el) el.textContent=secas;
-    el=document.getElementById('dash-prenadas'); if(el) el.textContent=prenadas;
-    el=document.getElementById('dash-lactantes'); if(el) el.textContent=lactantes;
-    el=document.getElementById('dash-novillas'); if(el) el.textContent=novillas;
-    el=document.getElementById('dash-total'); if(el) el.textContent=total;
-    el=document.getElementById('dash-hoy'); if(el) el.textContent=hoy;
+    el=document.getElementById('dk-total');     if(el) el.textContent=total;
+    el=document.getElementById('dk-activas');   if(el) el.textContent=activas;
+    el=document.getElementById('dk-lactantes'); if(el) el.textContent=lactantes;
+    el=document.getElementById('dk-secas');     if(el) el.textContent=secas;
+    el=document.getElementById('dk-prenadas');  if(el) el.textContent=prenadas;
+    el=document.getElementById('dk-nacimientos'); if(el) el.textContent=nacimientos;
+
+    // Producción
+    var hoy = entregas[0] ? entregas[0].litros : 0;
+    var mesTotal = entregas.reduce((a,e)=>a+e.litros,0);
+    var lacCount = cows.filter(c=>c.estado==='Lactante'||c.estado==='Activa').length;
+    var lvd = lacCount&&hoy ? (hoy/lacCount).toFixed(1) : '—';
+    el=document.getElementById('dk-prod-hoy'); if(el) el.textContent=hoy+' L';
+    el=document.getElementById('dk-prod-mes'); if(el) el.textContent=mesTotal.toLocaleString()+' L';
+    el=document.getElementById('dk-lvd');      if(el) el.textContent=lvd+' L/vaca/día';
+    el=document.getElementById('hdr-total');   if(el) el.textContent=hoy+' L';
+    // También actualizar IDs usados en otras partes
     el=document.getElementById('dash-litros-hoy'); if(el) el.textContent=hoy+' L';
     el=document.getElementById('dash-litros-mes'); if(el) el.textContent=mesTotal.toLocaleString()+' L';
-    var dt=document.getElementById('dash-fecha-turno');
-    if(dt){ var now=new Date(); var dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado']; var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']; var h=now.getHours(); var turno=h<12?'☀️ Ordeño matutino':h<18?'🌤 Ordeño vespertino':'🌙 Cierre del día'; dt.textContent=dias[now.getDay()]+' '+now.getDate()+' '+meses[now.getMonth()]+' · '+turno; }
+    el=document.getElementById('dash-total');      if(el) el.textContent=total;
+    el=document.getElementById('dash-activas');    if(el) el.textContent=activas;
+    el=document.getElementById('dash-secas');      if(el) el.textContent=secas;
+    el=document.getElementById('dash-prenadas');   if(el) el.textContent=prenadas;
+    el=document.getElementById('dash-lactantes');  if(el) el.textContent=lactantes;
+    el=document.getElementById('dash-novillas');   if(el) el.textContent=cows.filter(c=>c.tipo==='Novilla').length;
+    el=document.getElementById('dash-hoy');        if(el) el.textContent=hoy;
+
+    // Tendencia vs ayer
+    var trend = document.getElementById('dk-prod-trend');
+    if(trend) {
+      if(entregas.length>=2) {
+        var diff = entregas[0].litros - entregas[1].litros;
+        trend.textContent = (diff>=0?'↑ +':' ↓ ')+Math.abs(diff).toFixed(1)+' L vs ayer';
+        trend.style.color = diff>=0 ? 'rgba(255,255,255,.85)' : 'rgba(255,200,200,.85)';
+      } else { trend.textContent = ''; }
+    }
+
+    // Gráfico barras 7 días
+    var vals7 = entregas.slice(0,7).map(e=>e.litros).reverse();
+    var lbls7 = entregas.slice(0,7).map(e=>e.fecha.slice(5)).reverse();
+    renderBarChart('main-chart', vals7, lbls7, 'var(--accent)', 100, true);
+    var avg7 = vals7.length ? Math.round(vals7.reduce((a,b)=>a+b,0)/vals7.length) : 0;
+    el=document.getElementById('dk-chart-avg'); if(el) el.textContent = avg7 ? 'Prom. '+avg7+' L/día' : '';
+
+    // Ranking producción (por produccion L/día registrada en la vaca)
+    var actList = cows.filter(c=>c.estado!=='Baja'&&c.produccion>0).sort((a,b)=>b.produccion-a.produccion);
+    var maxProd = actList[0] ? actList[0].produccion : 1;
+    var top3El = document.getElementById('dash-top3');
+    var bot3El = document.getElementById('dash-bottom3');
+    if(top3El) {
+      if(!actList.length) { top3El.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin datos de producción</div>'; }
+      else {
+        top3El.innerHTML = actList.slice(0,3).map(c=>'<div class="rank-row"><div class="rank-name">'+c.name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(c.produccion/maxProd*100)+'%;background:#1D9E75"></div></div><div class="rank-val">'+c.produccion.toFixed(1)+' L</div></div>').join('');
+      }
+    }
+    if(bot3El) {
+      var worst = actList.length>3 ? actList.slice(-3).reverse() : [];
+      if(!worst.length) { bot3El.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin suficientes datos</div>'; }
+      else {
+        bot3El.innerHTML = worst.map(c=>'<div class="rank-row"><div class="rank-name">'+c.name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(c.produccion/maxProd*100)+'%;background:#EF4444"></div></div><div class="rank-val" style="color:#EF4444">'+c.produccion.toFixed(1)+' L</div></div>').join('');
+      }
+    }
+
+    // Vacas más tratadas (veterinaria)
+    var enfEl = document.getElementById('dash-enfermas');
+    if(enfEl && vetReg.length) {
+      var conteo = {};
+      vetReg.forEach(r=>{ conteo[r.animal] = (conteo[r.animal]||0)+1; });
+      var sorted = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,4);
+      var maxT = sorted[0][1];
+      enfEl.innerHTML = sorted.map(([name,count])=>'<div class="rank-row"><div class="rank-name">'+name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(count/maxT*100)+'%;background:#F59E0B"></div></div><div class="rank-val" style="color:#D97706">'+count+' trat.</div></div>').join('');
+    }
+
+    // Vacas secas
+    var secasList = cows.filter(c=>c.estado==='Seca');
+    var secasBox = document.getElementById('dash-secas-box');
+    var secasList2 = document.getElementById('dash-secas-list');
+    if(secasBox) secasBox.style.display = secasList.length ? '' : 'none';
+    if(secasList2 && secasList.length) {
+      secasList2.innerHTML = secasList.map(c=>'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid rgba(0,0,0,.07);font-size:13px"><span style="font-weight:500;color:#633806">🐄 '+c.name+'</span><span style="color:#856404">#'+c.arete+'</span></div>').join('');
+    }
   }
+
+  /* ===== RENDERIZAR PARTOS ===== */
+  function renderPartos() {
+    // En el hato
+    var el = document.getElementById('partos-list-hato');
+    // En el dashboard
+    var dash = document.getElementById('dash-nacimientos');
+    var resLabel = { normal:'✅ Normal', dificil:'⚠️ Difícil', aborto:'❌ Aborto', muerto:'💀 Nac. muerto', cesarea:'🏥 Cesárea' };
+    var sexoLabel = { hembra:'Hembra 🐄', macho:'Macho 🐂' };
+    if(!partos.length) {
+      if(el)   el.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin partos registrados</div>';
+      if(dash) dash.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:12px 0">Sin nacimientos registrados</div>';
+      return;
+    }
+    var html = partos.slice(0,20).map(p=>{
+      var cls = 'parto-'+p.resultado;
+      return '<div style="padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div><span style="font-weight:600;font-size:13px;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</span>'
+        +(p.sexo?'<span style="font-size:11px;color:var(--color-text-secondary);margin-left:6px">'+sexoLabel[p.sexo]+'</span>':'')
+        +'</div>'
+        +'<span class="parto-badge '+cls+'">'+(resLabel[p.resultado]||p.resultado)+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">'+p.fecha
+        +(p.pesoCria?' · Cría: '+p.pesoCria+' kg':'')
+        +(p.atencion?' · '+p.atencion:'')
+        +'</div>'
+        +(p.obs?'<div style="font-size:11px;color:var(--color-text-secondary);margin-top:1px;font-style:italic">'+p.obs+'</div>':'')
+        +'</div>';
+    }).join('');
+    if(el)   el.innerHTML=html;
+    if(dash) dash.innerHTML=partos.slice(0,4).map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span style="font-size:13px;font-weight:500;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</span><div style="text-align:right"><span class="parto-badge parto-'+(p.resultado||'normal')+'">'+(resLabel[p.resultado]||'—')+'</span><div style="font-size:10px;color:var(--color-text-secondary);margin-top:1px">'+p.fecha+'</div></div></div>').join('');
+  }
+
+  /* ===== GUARDAR PARTO ===== */
+  async function saveParto() {
+    var vaca = document.getElementById('parto-vaca').value;
+    var fecha = document.getElementById('parto-fecha').value;
+    var resultado = document.getElementById('parto-resultado').value;
+    if(!vaca)  { alert('Seleccione la vaca madre'); return; }
+    if(!fecha) { alert('Ingrese la fecha del parto'); return; }
+    var reg = {
+      vaca, fecha, resultado,
+      sexo:       ['normal','dificil','cesarea'].includes(resultado) ? document.getElementById('parto-sexo').value : '',
+      pesoCria:   parseFloat(document.getElementById('parto-peso-cria').value) || 0,
+      pesoMadre:  parseFloat(document.getElementById('parto-peso-madre').value) || 0,
+      atencion:   document.getElementById('parto-atencion').value.trim(),
+      obs:        document.getElementById('parto-obs').value.trim(),
+      ts:         new Date().toISOString()
+    };
+    closeModal('modal-parto');
+    ['parto-peso-cria','parto-peso-madre','parto-atencion','parto-obs'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+    try {
+      await window.fbAddParto(reg);
+      // Si fue parto exitoso, actualizar el contador de partos de la vaca
+      if(['normal','dificil','cesarea'].includes(resultado)) {
+        var cow = cows.find(c=>c.name===vaca);
+        if(cow) { var updated=Object.assign({},cow,{partos:(cow.partos||0)+1,ultparto:fecha}); await window.fbUpdateCow(updated); }
+      }
+      showToast('🐣','Parto registrado','El parto de '+vaca+' fue guardado correctamente.');
+    } catch(e) {
+      showToast('❌','Error al guardar','No se pudo guardar el parto. Intente de nuevo.');
+    }
+  }
+
+
 
   /* ===== HATO ===== */
   function renderCows(filter) {
@@ -1321,8 +1561,9 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
     e=document.getElementById('leche-vaca'); if(e) e.innerHTML=cowOpts;
     e=document.getElementById('vet-vaca'); if(e) e.innerHTML='<option value="__hato__">Todo el Hato</option>'+cowOpts;
     e=document.getElementById('baja-vaca'); if(e) e.innerHTML=cowOpts;
+    e=document.getElementById('parto-vaca'); if(e) e.innerHTML=cowOpts;
     var t=new Date().toISOString().split('T')[0];
-    ['leche-fecha','vet-fecha','baja-fecha','ent-fecha'].forEach(id=>{var x=document.getElementById(id); if(x&&!x.value) x.value=t;});
+    ['leche-fecha','vet-fecha','baja-fecha','ent-fecha','parto-fecha'].forEach(id=>{var x=document.getElementById(id); if(x&&!x.value) x.value=t;});
   }
   function openModal(id) { populateSelects(); document.getElementById(id).classList.add('open'); }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1633,7 +1874,7 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
 
   /* ===== RENDER GLOBAL ===== */
   function renderAll() {
-    renderMainDash(); renderCows(); renderLeche(); renderVet(); renderBajas();
+    renderMainDash(); renderCows(); renderLeche(); renderVet(); renderBajas(); renderPartos();
     updateProdMetrics(); renderEntregaTable();
     renderBarChart('prod-main-chart',entregas.slice(0,7).map(e=>e.litros).reverse(),entregas.slice(0,7).map(e=>e.fecha.slice(5)).reverse(),'var(--accent)',130,true);
     renderTrend(); renderLineChart();

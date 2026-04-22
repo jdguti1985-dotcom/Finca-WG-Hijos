@@ -48,11 +48,24 @@
     }
 
     *,*::before,*::after { box-sizing:border-box; }
-    html { font-size:var(--base-font,13px); height:100%; overflow:hidden; }
-    body { background-color:#1D9E75; margin:0; display:flex; justify-content:center; height:100%; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; font-size:var(--base-font,13px); }
+    html { font-size:var(--base-font,13px); height:100%; }
+    body { background-color:#1D9E75; margin:0; padding:0; display:flex; justify-content:center; align-items:stretch; height:100%; font-family:'Segoe UI',system-ui,sans-serif; font-size:var(--base-font,13px); }
 
     /* ===== APP SHELL ===== */
-    .app { width:100%; max-width:500px; background:var(--color-background-secondary); height:100vh; margin-top:0; border-radius:0; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+    .app {
+      width:100%;
+      max-width:500px;
+      background:var(--color-background-secondary);
+      /* iPhone Safari fix: 100dvh usa el viewport dinámico (sin barra del navegador) */
+      height:100vh; /* fallback para Safari antiguo */
+      height:100dvh; /* Safari iOS 15.4+, Chrome, Firefox */
+      margin:0;
+      border-radius:0;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+    }
     .hidden { display:none !important; }
 
     /* ===== LOGIN ===== */
@@ -126,7 +139,7 @@
     .install-banner-close { background:none; border:none; cursor:pointer; color:var(--accent-text2,#6DCFB2); font-size:18px; }
 
     /* ===== CONTENT / SECTIONS ===== */
-    .content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; min-height:0; }
+    .content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; min-height:0; overscroll-behavior:contain; }
     .section { display:none; padding:14px 14px 110px; }
     .section.active { display:block; }
     .section-title { font-size:15px; font-weight:600; color:var(--color-text-primary); margin-bottom:12px; }
@@ -2162,6 +2175,22 @@
         .catch(e=>console.warn('SW err:',e));
     });
   }
+
+  /* ===== FIX ALTURA REAL IPHONE SAFARI ===== */
+  // Safari iOS antiguo no soporta 100dvh — este fix calcula la altura real
+  function fixViewportHeight() {
+    var vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--real-vh', vh + 'px');
+    // Si el navegador no soporta dvh, usar la variable CSS
+    if (!CSS.supports('height', '1dvh')) {
+      document.querySelector('.app').style.height = window.innerHeight + 'px';
+    }
+  }
+  fixViewportHeight();
+  window.addEventListener('resize', fixViewportHeight);
+  window.addEventListener('orientationchange', function() {
+    setTimeout(fixViewportHeight, 200);
+  });
 
   /* ===== BANNER iOS ===== */
   function checkInstallBanner() {

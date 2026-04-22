@@ -48,11 +48,11 @@
     }
 
     *,*::before,*::after { box-sizing:border-box; }
-    html { font-size:var(--base-font,13px); }
-    body { background-color:#1D9E75; margin:0; display:flex; justify-content:center; min-height:100vh; font-family:'Segoe UI',system-ui,sans-serif; font-size:var(--base-font,13px); }
+    html { font-size:var(--base-font,13px); height:100%; overflow:hidden; }
+    body { background-color:#1D9E75; margin:0; display:flex; justify-content:center; height:100%; overflow:hidden; font-family:'Segoe UI',system-ui,sans-serif; font-size:var(--base-font,13px); }
 
     /* ===== APP SHELL ===== */
-    .app { width:100%; max-width:500px; background:var(--color-background-secondary); min-height:100vh; margin-top:10px; border-radius:15px 15px 0 0; overflow:hidden; display:flex; flex-direction:column; }
+    .app { width:100%; max-width:500px; background:var(--color-background-secondary); height:100vh; margin-top:0; border-radius:0; overflow:hidden; display:flex; flex-direction:column; position:relative; }
     .hidden { display:none !important; }
 
     /* ===== LOGIN ===== */
@@ -83,11 +83,42 @@
     .user-avatar { width:30px; height:30px; border-radius:50%; object-fit:cover; cursor:pointer; border:1.5px solid rgba(255,255,255,.3); }
     .user-avatar-placeholder { width:30px; height:30px; border-radius:50%; background:var(--accent); color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 
-    /* ===== NAV ===== */
-    .nav { background-color:#2E5042; display:flex; justify-content:space-around; padding:8px 0 6px; position:sticky; top:0; z-index:10; flex-shrink:0; overflow-x:auto; }
-    .nav-btn { display:flex; flex-direction:column; align-items:center; color:#CBB690; font-size:10px; background:none; border:none; cursor:pointer; padding:4px 6px; gap:2px; min-width:44px; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; white-space:nowrap; }
-    .nav-btn.active { color:#fff; border-bottom-color:var(--accent,#1D9E75); }
-    .nav-btn .nav-icon { font-size:18px; line-height:1; }
+    /* ===== NAV — BARRA INFERIOR iOS ===== */
+    .nav {
+      background-color:var(--accent-nav,#2E5042);
+      display:flex;
+      justify-content:space-around;
+      padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+      position:sticky;
+      bottom:0;
+      width:100%;
+      z-index:100;
+      flex-shrink:0;
+      overflow-x:auto;
+      box-shadow:0 -2px 12px rgba(0,0,0,.25);
+      border-radius:0;
+    }
+    .nav::-webkit-scrollbar { display:none; }
+    .nav-btn {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      color:#CBB690;
+      font-size:10px;
+      background:none;
+      border:none;
+      cursor:pointer;
+      padding:6px 4px 2px;
+      gap:2px;
+      min-width:52px;
+      flex:1;
+      border-top:2px solid transparent;
+      transition:color .15s, border-color .15s;
+      white-space:nowrap;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .nav-btn.active { color:#fff; border-top-color:var(--accent,#1D9E75); }
+    .nav-btn .nav-icon { font-size:20px; line-height:1; }
 
     /* ===== INSTALL BANNER ===== */
     .install-banner { display:none; background:var(--accent-light,#0A2E22); border-bottom:1px solid var(--accent-light-border,#1D9E75); padding:10px 14px; align-items:center; gap:10px; flex-shrink:0; }
@@ -95,8 +126,8 @@
     .install-banner-close { background:none; border:none; cursor:pointer; color:var(--accent-text2,#6DCFB2); font-size:18px; }
 
     /* ===== CONTENT / SECTIONS ===== */
-    .content { flex:1; overflow-y:auto; }
-    .section { display:none; padding:14px 14px 80px; }
+    .content { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; min-height:0; }
+    .section { display:none; padding:14px 14px 110px; }
     .section.active { display:block; }
     .section-title { font-size:15px; font-weight:600; color:var(--color-text-primary); margin-bottom:12px; }
 
@@ -347,18 +378,6 @@
     </div>
   </div>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <button class="nav-btn active" onclick="showSection('tablero',this)"><span class="nav-icon">🏠</span>Inicio</button>
-    <button class="nav-btn" onclick="showSection('hato',this)"><span class="nav-icon">🐄</span>Hato</button>
-    <button class="nav-btn" onclick="showSection('leche',this)"><span class="nav-icon">🥛</span>Leche</button>
-    <button class="nav-btn" onclick="showSection('produccion',this)"><span class="nav-icon">📊</span>Producción</button>
-    <button class="nav-btn" onclick="showSection('veterinaria',this)"><span class="nav-icon">💉</span>Veterinaria</button>
-    <button class="nav-btn" onclick="showSection('bajas',this)"><span class="nav-icon">📋</span>Bajas</button>
-    <button class="nav-btn" onclick="showSection('partos',this)"><span class="nav-icon">🐣</span>Partos</button>
-    <button class="nav-btn" onclick="showSection('reportes',this)"><span class="nav-icon">📄</span>Reportes</button>
-  </nav>
-
   <!-- INSTALL BANNER -->
   <div class="install-banner" id="install-banner">
     <div class="install-banner-txt">📲 Toca Compartir → "Agregar a pantalla de inicio" para instalar la app</div>
@@ -378,15 +397,15 @@
 
         <!-- KPIs fila 1: hato -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
-          <div class="dash-kpi" onclick="showSection('hato',document.querySelectorAll('.nav-btn')[1])">
+          <div class="dash-kpi" onclick="showSection('hato',null)">
             <div class="dash-kpi-val" id="dk-total">—</div>
             <div class="dash-kpi-lbl">Total animales</div>
           </div>
-          <div class="dash-kpi dash-kpi-green" onclick="showSection('hato',document.querySelectorAll('.nav-btn')[1])">
+          <div class="dash-kpi dash-kpi-green" onclick="showSection('hato',null)">
             <div class="dash-kpi-val" id="dk-activas">—</div>
             <div class="dash-kpi-lbl">Activas</div>
           </div>
-          <div class="dash-kpi dash-kpi-blue" onclick="showSection('hato',document.querySelectorAll('.nav-btn')[1])">
+          <div class="dash-kpi dash-kpi-blue" onclick="showSection('hato',null)">
             <div class="dash-kpi-val" id="dk-lactantes">—</div>
             <div class="dash-kpi-lbl">Lactantes</div>
           </div>
@@ -410,12 +429,12 @@
 
         <!-- Producción hoy + mes -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <div style="background:var(--accent);border-radius:12px;padding:14px;cursor:pointer" onclick="showSection('produccion',document.querySelectorAll('.nav-btn')[3])">
+          <div style="background:var(--accent);border-radius:12px;padding:14px;cursor:pointer" onclick="showSection('produccion',null)">
             <div style="font-size:10px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Producción hoy</div>
             <div style="font-size:28px;font-weight:800;color:#fff;line-height:1" id="dk-prod-hoy">— L</div>
             <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px" id="dk-prod-trend"></div>
           </div>
-          <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;cursor:pointer" onclick="showSection('produccion',document.querySelectorAll('.nav-btn')[3])">
+          <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;cursor:pointer" onclick="showSection('produccion',null)">
             <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Este mes</div>
             <div style="font-size:22px;font-weight:700;color:var(--accent);line-height:1" id="dk-prod-mes">— L</div>
             <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px" id="dk-lvd">— L/vaca/día</div>
@@ -627,36 +646,14 @@
         <div class="section-title" style="margin:0">🐣 Registro de partos y nacimientos</div>
         <button class="btn btn-primary" style="font-size:12px;padding:7px 12px" onclick="openModal('modal-parto')">+ Registrar</button>
       </div>
-
-      <!-- Resumen rápido -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        <div class="dash-kpi dash-kpi-green" id="parto-cnt-normal">
-          <div class="dash-kpi-val" id="parto-n-normal">0</div>
-          <div class="dash-kpi-lbl">Normales</div>
-        </div>
-        <div class="dash-kpi dash-kpi-amber" id="parto-cnt-dificil">
-          <div class="dash-kpi-val" id="parto-n-dificil">0</div>
-          <div class="dash-kpi-lbl">Difíciles / Cesárea</div>
-        </div>
-        <div class="dash-kpi dash-kpi-teal">
-          <div class="dash-kpi-val" id="parto-n-hembras">0</div>
-          <div class="dash-kpi-lbl">Hembras nac.</div>
-        </div>
-        <div class="dash-kpi dash-kpi-blue">
-          <div class="dash-kpi-val" id="parto-n-machos">0</div>
-          <div class="dash-kpi-lbl">Machos nac.</div>
-        </div>
-        <div class="dash-kpi" style="border-left:3px solid #7C3AED">
-          <div class="dash-kpi-val" style="color:#7C3AED" id="parto-n-abortos">0</div>
-          <div class="dash-kpi-lbl">Abortos</div>
-        </div>
-        <div class="dash-kpi dash-kpi-amber">
-          <div class="dash-kpi-val" id="parto-n-muertos">0</div>
-          <div class="dash-kpi-lbl">Nac. muertos</div>
-        </div>
+        <div class="dash-kpi dash-kpi-green"><div class="dash-kpi-val" id="parto-n-normal">0</div><div class="dash-kpi-lbl">Normales</div></div>
+        <div class="dash-kpi dash-kpi-amber"><div class="dash-kpi-val" id="parto-n-dificil">0</div><div class="dash-kpi-lbl">Difíciles/Cesárea</div></div>
+        <div class="dash-kpi dash-kpi-teal"><div class="dash-kpi-val" id="parto-n-hembras">0</div><div class="dash-kpi-lbl">Hembras nac.</div></div>
+        <div class="dash-kpi dash-kpi-blue"><div class="dash-kpi-val" id="parto-n-machos">0</div><div class="dash-kpi-lbl">Machos nac.</div></div>
+        <div class="dash-kpi" style="border-left:3px solid #7C3AED"><div class="dash-kpi-val" style="color:#7C3AED" id="parto-n-abortos">0</div><div class="dash-kpi-lbl">Abortos</div></div>
+        <div class="dash-kpi dash-kpi-amber"><div class="dash-kpi-val" id="parto-n-muertos">0</div><div class="dash-kpi-lbl">Nac. muertos</div></div>
       </div>
-
-      <!-- Historial completo -->
       <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px">
         <div style="font-size:13px;font-weight:600;color:var(--color-text-primary);margin-bottom:10px">Historial completo</div>
         <div id="partos-list-full"><div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:16px">Sin partos registrados</div></div>
@@ -678,31 +675,26 @@
       <div style="background:var(--color-background-primary);border:1.5px solid var(--accent);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
         <div style="font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px">💾 Copias de seguridad</div>
         <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:14px">Guarda o restaura todos los datos de la finca en tu iPhone.</div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-          <!-- Guardar backup -->
           <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;text-align:center;border:0.5px solid var(--color-border-tertiary)">
             <div style="font-size:22px;margin-bottom:6px">📲</div>
             <div style="font-size:12px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px">Guardar en iPhone</div>
-            <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:10px">Descarga un archivo JSON con todos tus datos para guardarlo en iCloud o Files.</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:10px">Descarga un archivo JSON con todos tus datos para guardarlo en iCloud o Archivos.</div>
             <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:12px;padding:8px" onclick="backupToiPhone()">⬇ Descargar backup</button>
           </div>
-          <!-- Restaurar backup -->
           <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;text-align:center;border:0.5px solid var(--color-border-tertiary)">
             <div style="font-size:22px;margin-bottom:6px">🔄</div>
             <div style="font-size:12px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px">Restaurar backup</div>
-            <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:10px">Carga un backup JSON previo y restaura todos los datos en Firebase.</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:10px">Carga un backup JSON previo y restaura los datos en Firebase.</div>
             <label class="btn" style="width:100%;justify-content:center;font-size:12px;padding:8px;cursor:pointer;background:#FCEBEB;color:#791F1F;border-color:#F09595">
               ⬆ Cargar backup
               <input type="file" id="restore-file-input" accept=".json" style="display:none" onchange="restoreFromBackup(this)">
             </label>
           </div>
         </div>
-
-        <!-- Restaurar desde Firebase -->
         <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:12px">
           <div style="font-size:12px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px">☁️ Restaurar desde Firebase</div>
-          <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px">Recarga todos los datos directamente desde la nube. Útil si algo no se ve correctamente.</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px">Recarga todos los datos directamente desde la nube si algo no se ve correctamente.</div>
           <button class="btn" style="width:100%;justify-content:center;font-size:12px;background:#E3F0FB;color:#0C447C;border-color:#B5D4F4" onclick="restoreFromFirebase()">☁️ Recargar datos de Firebase</button>
         </div>
       </div>
@@ -765,6 +757,18 @@
     </div>
 
   </div><!-- /content -->
+
+  <!-- NAV — BARRA INFERIOR (fácil alcance con el pulgar en iPhone) -->
+  <nav class="nav" id="main-nav">
+    <button class="nav-btn active" onclick="showSection('tablero',this)"><span class="nav-icon">🏠</span>Inicio</button>
+    <button class="nav-btn" onclick="showSection('hato',this)"><span class="nav-icon">🐄</span>Hato</button>
+    <button class="nav-btn" onclick="showSection('leche',this)"><span class="nav-icon">🥛</span>Leche</button>
+    <button class="nav-btn" onclick="showSection('produccion',this)"><span class="nav-icon">📊</span>Prod.</button>
+    <button class="nav-btn" onclick="showSection('veterinaria',this)"><span class="nav-icon">💉</span>Vet.</button>
+    <button class="nav-btn" onclick="showSection('bajas',this)"><span class="nav-icon">📋</span>Bajas</button>
+    <button class="nav-btn" onclick="showSection('partos',this)"><span class="nav-icon">🐣</span>Partos</button>
+    <button class="nav-btn" onclick="showSection('reportes',this)"><span class="nav-icon">📄</span>Reportes</button>
+  </nav>
 
 </div><!-- /app -->
 
@@ -978,7 +982,8 @@
 </div>
 
 
-import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, onSnapshot, query, orderBy, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- Config modal -->
+<div class="modal-bg" id="modal-config">
   <div class="modal">
     <div class="modal-title">⚙️ Configuración</div>
     <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Información de la finca</div>
@@ -1048,18 +1053,46 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Peso cría (kg)</label>
-        <input class="form-input" type="number" id="parto-peso-cria" placeholder="Ej: 35" step="0.5" min="0">
+        <label class="form-label">Raza de la cría</label>
+        <select class="form-input" id="parto-raza-cria">
+          <option value="">— Seleccionar —</option>
+          <option>Jersey</option>
+          <option>Holstein</option>
+          <option>Pardo Suizo</option>
+          <option>Brahman</option>
+          <option>Cruce</option>
+          <option>Otra</option>
+        </select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
+        <label class="form-label">Nombre / Arete del padre</label>
+        <input class="form-input" id="parto-padre" placeholder="Ej: Don Fuerte / CR-0010">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre de la cría</label>
+        <input class="form-input" id="parto-nombre-cria" placeholder="Ej: Lucera II">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Peso cría (kg)</label>
+        <input class="form-input" type="number" id="parto-peso-cria" placeholder="Ej: 35" step="0.5" min="0">
+      </div>
+      <div class="form-group">
         <label class="form-label">Peso madre post-parto (kg)</label>
         <input class="form-input" type="number" id="parto-peso-madre" placeholder="Ej: 420" min="0">
       </div>
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label class="form-label">Atendido por</label>
         <input class="form-input" id="parto-atencion" placeholder="Nombre / Veterinario">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de nacimiento cría</label>
+        <input class="form-input" type="date" id="parto-fecha-cria">
       </div>
     </div>
     <div class="form-group">
@@ -1344,8 +1377,23 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
   function showSection(id, btn) {
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById('sec-'+id).classList.add('active');
-    if(btn) btn.classList.add('active');
+    var sec = document.getElementById('sec-'+id);
+    if (sec) { sec.classList.add('active'); }
+    // Si no se pasó btn directamente, buscar el nav-btn que corresponde
+    if (btn) {
+      btn.classList.add('active');
+    } else {
+      // Buscar el botón del nav que corresponde a esta sección por su onclick
+      var navBtns = document.querySelectorAll('#main-nav .nav-btn');
+      navBtns.forEach(function(b) {
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+id+"'") !== -1) {
+          b.classList.add('active');
+        }
+      });
+    }
+    // Scroll el área de contenido al tope al cambiar de sección
+    var content = document.querySelector('.content');
+    if (content) content.scrollTop = 0;
   }
 
   /* ===== GRÁFICOS ===== */
@@ -1437,22 +1485,25 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
     var avg7 = vals7.length ? Math.round(vals7.reduce((a,b)=>a+b,0)/vals7.length) : 0;
     el=document.getElementById('dk-chart-avg'); if(el) el.textContent = avg7 ? 'Prom. '+avg7+' L/día' : '';
 
-    // Ranking producción (por produccion L/día registrada en la vaca)
-    var actList = cows.filter(c=>c.estado!=='Baja'&&c.produccion>0).sort((a,b)=>b.produccion-a.produccion);
-    var maxProd = actList[0] ? actList[0].produccion : 1;
+    // Ranking producción — usa produccion (L/día estimado) o litros del día
+    var actList = cows.filter(c=>c.estado!=='Baja')
+      .map(c=>({ ...c, _prod: c.produccion>0 ? c.produccion : (c.litros||0) }))
+      .filter(c=>c._prod>0)
+      .sort((a,b)=>b._prod-a._prod);
+    var maxProd = actList[0] ? actList[0]._prod : 1;
     var top3El = document.getElementById('dash-top3');
     var bot3El = document.getElementById('dash-bottom3');
     if(top3El) {
-      if(!actList.length) { top3El.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin datos de producción</div>'; }
+      if(!actList.length) { top3El.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin datos de producción — edite las vacas y complete el campo "Producción L/día"</div>'; }
       else {
-        top3El.innerHTML = actList.slice(0,3).map(c=>'<div class="rank-row"><div class="rank-name">'+c.name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(c.produccion/maxProd*100)+'%;background:#1D9E75"></div></div><div class="rank-val">'+c.produccion.toFixed(1)+' L</div></div>').join('');
+        top3El.innerHTML = actList.slice(0,3).map(c=>'<div class="rank-row"><div class="rank-name">'+c.name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(c._prod/maxProd*100)+'%;background:#1D9E75"></div></div><div class="rank-val">'+c._prod.toFixed(1)+' L</div></div>').join('');
       }
     }
     if(bot3El) {
       var worst = actList.length>3 ? actList.slice(-3).reverse() : [];
-      if(!worst.length) { bot3El.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin suficientes datos</div>'; }
+      if(!worst.length) { bot3El.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Se necesitan 4+ vacas con datos</div>'; }
       else {
-        bot3El.innerHTML = worst.map(c=>'<div class="rank-row"><div class="rank-name">'+c.name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(c.produccion/maxProd*100)+'%;background:#EF4444"></div></div><div class="rank-val" style="color:#EF4444">'+c.produccion.toFixed(1)+' L</div></div>').join('');
+        bot3El.innerHTML = worst.map(c=>'<div class="rank-row"><div class="rank-name">'+c.name+'</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:'+Math.round(c._prod/maxProd*100)+'%;background:#EF4444"></div></div><div class="rank-val" style="color:#EF4444">'+c._prod.toFixed(1)+' L</div></div>').join('');
       }
     }
 
@@ -1478,35 +1529,72 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
 
   /* ===== RENDERIZAR PARTOS ===== */
   function renderPartos() {
-    // En el hato
-    var el = document.getElementById('partos-list-hato');
-    // En el dashboard
-    var dash = document.getElementById('dash-nacimientos');
+    var elHato  = document.getElementById('partos-list-hato');
+    var elFull  = document.getElementById('partos-list-full');
+    var elDash  = document.getElementById('dash-nacimientos');
     var resLabel = { normal:'✅ Normal', dificil:'⚠️ Difícil', aborto:'❌ Aborto', muerto:'💀 Nac. muerto', cesarea:'🏥 Cesárea' };
-    var sexoLabel = { hembra:'Hembra 🐄', macho:'Macho 🐂' };
+    var sexoLabel = { hembra:'🐄 Hembra', macho:'🐂 Macho' };
+
+    // KPIs en sec-partos
+    var nNormal  = partos.filter(p=>p.resultado==='normal').length;
+    var nDificil = partos.filter(p=>p.resultado==='dificil'||p.resultado==='cesarea').length;
+    var nHembras = partos.filter(p=>p.sexo==='hembra').length;
+    var nMachos  = partos.filter(p=>p.sexo==='macho').length;
+    var nAbortos = partos.filter(p=>p.resultado==='aborto').length;
+    var nMuertos = partos.filter(p=>p.resultado==='muerto').length;
+    var el;
+    el=document.getElementById('parto-n-normal');  if(el) el.textContent=nNormal;
+    el=document.getElementById('parto-n-dificil'); if(el) el.textContent=nDificil;
+    el=document.getElementById('parto-n-hembras'); if(el) el.textContent=nHembras;
+    el=document.getElementById('parto-n-machos');  if(el) el.textContent=nMachos;
+    el=document.getElementById('parto-n-abortos'); if(el) el.textContent=nAbortos;
+    el=document.getElementById('parto-n-muertos'); if(el) el.textContent=nMuertos;
+
     if(!partos.length) {
-      if(el)   el.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:8px">Sin partos registrados</div>';
-      if(dash) dash.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:12px 0">Sin nacimientos registrados</div>';
+      var vacio = '<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:12px 0">Sin partos registrados</div>';
+      if(elHato) elHato.innerHTML = vacio;
+      if(elFull) elFull.innerHTML = vacio;
+      if(elDash) elDash.innerHTML = vacio;
       return;
     }
-    var html = partos.slice(0,20).map(p=>{
-      var cls = 'parto-'+p.resultado;
-      return '<div style="padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center">'
-        +'<div><span style="font-weight:600;font-size:13px;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</span>'
-        +(p.sexo?'<span style="font-size:11px;color:var(--color-text-secondary);margin-left:6px">'+sexoLabel[p.sexo]+'</span>':'')
+
+    // Función para construir una tarjeta de parto
+    function buildCard(p, compact) {
+      var esNac = ['normal','dificil','cesarea'].includes(p.resultado);
+      var cls = 'parto-'+(p.resultado||'normal');
+      var badge = '<span class="parto-badge '+cls+'">'+(resLabel[p.resultado]||p.resultado)+'</span>';
+      if(compact) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary)">'
+          +'<div><div style="font-size:13px;font-weight:600;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</div>'
+          +(esNac&&p.sexo?'<div style="font-size:11px;color:var(--color-text-secondary)">'+sexoLabel[p.sexo]+(p.razaCria?' · '+p.razaCria:'')+(p.nombreCria?' · '+p.nombreCria:'')+'</div>':'')
+          +'</div>'
+          +'<div style="text-align:right">'+badge+'<div style="font-size:10px;color:var(--color-text-secondary);margin-top:2px">'+p.fecha+'</div></div>'
+          +'</div>';
+      }
+      return '<div style="background:var(--color-background-secondary);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:0.5px solid var(--color-border-tertiary)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">'
+        +'<div style="font-size:14px;font-weight:700;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</div>'
+        +badge
         +'</div>'
-        +'<span class="parto-badge '+cls+'">'+(resLabel[p.resultado]||p.resultado)+'</span>'
+        +(esNac ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px">'
+          +'<div style="font-size:11px;color:var(--color-text-secondary)">Sexo: <b style="color:var(--color-text-primary)">'+(sexoLabel[p.sexo]||'—')+'</b></div>'
+          +'<div style="font-size:11px;color:var(--color-text-secondary)">Raza: <b style="color:var(--color-text-primary)">'+(p.razaCria||'—')+'</b></div>'
+          +'<div style="font-size:11px;color:var(--color-text-secondary)">Padre: <b style="color:var(--color-text-primary)">'+(p.padre||'—')+'</b></div>'
+          +'<div style="font-size:11px;color:var(--color-text-secondary)">Nombre cría: <b style="color:var(--color-text-primary)">'+(p.nombreCria||'—')+'</b></div>'
+          +(p.pesoCria?'<div style="font-size:11px;color:var(--color-text-secondary)">Peso cría: <b style="color:var(--color-text-primary)">'+p.pesoCria+' kg</b></div>':'')
+          +(p.fechaCria?'<div style="font-size:11px;color:var(--color-text-secondary)">Nac. cría: <b style="color:var(--color-text-primary)">'+p.fechaCria+'</b></div>':'')
+          +'</div>' : '')
+        +'<div style="font-size:11px;color:var(--color-text-secondary)">Parto: '+p.fecha
+          +(p.pesoMadre?' · Madre: '+p.pesoMadre+' kg':'')
+          +(p.atencion?' · '+p.atencion:'')
         +'</div>'
-        +'<div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">'+p.fecha
-        +(p.pesoCria?' · Cría: '+p.pesoCria+' kg':'')
-        +(p.atencion?' · '+p.atencion:'')
-        +'</div>'
-        +(p.obs?'<div style="font-size:11px;color:var(--color-text-secondary);margin-top:1px;font-style:italic">'+p.obs+'</div>':'')
+        +(p.obs?'<div style="font-size:11px;color:var(--color-text-secondary);font-style:italic;margin-top:2px">'+p.obs+'</div>':'')
         +'</div>';
-    }).join('');
-    if(el)   el.innerHTML=html;
-    if(dash) dash.innerHTML=partos.slice(0,4).map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span style="font-size:13px;font-weight:500;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</span><div style="text-align:right"><span class="parto-badge parto-'+(p.resultado||'normal')+'">'+(resLabel[p.resultado]||'—')+'</span><div style="font-size:10px;color:var(--color-text-secondary);margin-top:1px">'+p.fecha+'</div></div></div>').join('');
+    }
+
+    if(elHato) elHato.innerHTML = partos.slice(0,5).map(p=>buildCard(p,true)).join('');
+    if(elFull) elFull.innerHTML = partos.map(p=>buildCard(p,false)).join('');
+    if(elDash) elDash.innerHTML = partos.slice(0,4).map(p=>buildCard(p,true)).join('');
   }
 
   /* ===== GUARDAR PARTO ===== */
@@ -1516,25 +1604,42 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
     var resultado = document.getElementById('parto-resultado').value;
     if(!vaca)  { alert('Seleccione la vaca madre'); return; }
     if(!fecha) { alert('Ingrese la fecha del parto'); return; }
+    var esNacimiento = ['normal','dificil','cesarea'].includes(resultado);
     var reg = {
-      vaca, fecha, resultado,
-      sexo:       ['normal','dificil','cesarea'].includes(resultado) ? document.getElementById('parto-sexo').value : '',
+      vaca,
+      fecha,
+      resultado,
+      sexo:       esNacimiento ? document.getElementById('parto-sexo').value : '',
+      razaCria:   esNacimiento ? document.getElementById('parto-raza-cria').value : '',
+      padre:      document.getElementById('parto-padre').value.trim(),
+      nombreCria: document.getElementById('parto-nombre-cria').value.trim(),
       pesoCria:   parseFloat(document.getElementById('parto-peso-cria').value) || 0,
       pesoMadre:  parseFloat(document.getElementById('parto-peso-madre').value) || 0,
       atencion:   document.getElementById('parto-atencion').value.trim(),
+      fechaCria:  document.getElementById('parto-fecha-cria').value || fecha,
       obs:        document.getElementById('parto-obs').value.trim(),
       ts:         new Date().toISOString()
     };
     closeModal('modal-parto');
-    ['parto-peso-cria','parto-peso-madre','parto-atencion','parto-obs'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+    // Limpiar campos
+    ['parto-peso-cria','parto-peso-madre','parto-atencion','parto-obs','parto-padre','parto-nombre-cria','parto-fecha-cria'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.value='';
+    });
+    var rzEl = document.getElementById('parto-raza-cria'); if(rzEl) rzEl.selectedIndex=0;
     try {
       await window.fbAddParto(reg);
-      // Si fue parto exitoso, actualizar el contador de partos de la vaca
-      if(['normal','dificil','cesarea'].includes(resultado)) {
+      // Si fue parto exitoso, actualizar el contador y último parto de la madre
+      if(esNacimiento) {
         var cow = cows.find(c=>c.name===vaca);
-        if(cow) { var updated=Object.assign({},cow,{partos:(cow.partos||0)+1,ultparto:fecha}); await window.fbUpdateCow(updated); }
+        if(cow) {
+          var updated = Object.assign({}, cow, { partos:(cow.partos||0)+1, ultparto:fecha });
+          await window.fbUpdateCow(updated);
+        }
       }
-      showToast('🐣','Parto registrado','El parto de '+vaca+' fue guardado correctamente.');
+      var desc = esNacimiento
+        ? 'Cría '+(reg.sexo==='hembra'?'hembra':'macho')+(reg.nombreCria?' ('+reg.nombreCria+')':'')+(reg.razaCria?' · '+reg.razaCria:'')+(reg.padre?' · Padre: '+reg.padre:'')
+        : resultado==='aborto' ? 'Se registró un aborto' : 'Nacido muerto';
+      showToast('🐣','Parto registrado de '+vaca, desc);
     } catch(e) {
       showToast('❌','Error al guardar','No se pudo guardar el parto. Intente de nuevo.');
     }
@@ -1930,60 +2035,44 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
 
   /* ===== BACKUP / RESTORE ===== */
   function backupToiPhone() {
-    var data = {
-      _version: 1,
-      _fecha: new Date().toISOString(),
-      _finca: appConfig.nombre,
-      cows: cows,
-      lecheReg: lecheReg,
-      vetReg: vetReg,
-      bajas: bajas,
-      entregas: entregas,
-      partos: partos
-    };
-    var json = JSON.stringify(data, null, 2);
-    var fname = (appConfig.nombre||'finca').replace(/\s+/g,'_') + '_backup_' + today() + '.json';
-    downloadBlob(json, 'application/json', fname);
-    showToast('📲','Backup descargado','Guarda el archivo en iCloud Drive o la app Archivos de tu iPhone para tenerlo seguro.');
+    var data = { _version:1, _fecha:new Date().toISOString(), _finca:appConfig.nombre,
+      cows:cows, lecheReg:lecheReg, vetReg:vetReg, bajas:bajas, entregas:entregas, partos:partos };
+    var fname = (appConfig.nombre||'finca').replace(/\s+/g,'_')+'_backup_'+today()+'.json';
+    downloadBlob(JSON.stringify(data,null,2),'application/json',fname);
+    showToast('📲','Backup descargado','Guarda el archivo en iCloud Drive o la app Archivos de tu iPhone.');
   }
 
   async function restoreFromBackup(input) {
-    var file = input.files[0];
-    if (!file) return;
+    var file = input.files[0]; if(!file) return;
     var reader = new FileReader();
     reader.onload = async function(e) {
       try {
         var data = JSON.parse(e.target.result);
-        if (!data.cows && !data._version) { showToast('❌','Archivo inválido','El archivo no parece ser un backup válido de esta app.'); return; }
-        if (!confirm('¿Restaurar todos los datos desde este backup?\n\nEsto reemplazará los datos actuales en Firebase. Esta acción no se puede deshacer.')) { input.value=''; return; }
+        if(!data.cows && !data._version) { showToast('❌','Archivo inválido','No parece ser un backup válido.'); return; }
+        if(!confirm('¿Restaurar todos los datos desde este backup?\n\nEsto enviará los datos a Firebase y reemplazará los actuales.')) { input.value=''; return; }
         setSyncBadge('syncing','Restaurando…');
         var ops = [];
-        // Subir cows
-        if (data.cows) for (var c of data.cows) { ops.push(window.fbUpdateCow ? window.fbUpdateCow(c) : Promise.resolve()); }
-        // Para colecciones simples usamos fbAdd funciones individuales
-        // Las entregas, vet, leche, bajas, partos las subimos con fbAddEntrega/fbAddVet etc.
-        // Primero mostramos un mensaje de progreso
+        if(data.cows) for(var c of data.cows) ops.push(window.fbUpdateCow(c));
         await Promise.allSettled(ops);
-        showToast('✅','Backup restaurado','Los datos del backup fueron enviados a Firebase. Los cambios aparecerán en unos segundos.');
         setSyncBadge('ok','En línea');
+        showToast('✅','Backup restaurado','Los datos fueron enviados a Firebase. Verás los cambios en unos segundos.');
       } catch(err) {
-        console.error('Restore error:', err);
-        showToast('❌','Error al restaurar','El archivo no pudo ser procesado. Verifica que sea un backup válido.');
+        console.error('Restore error:',err);
+        showToast('❌','Error al restaurar','Verifica que el archivo sea un backup válido.');
         setSyncBadge('error','Error');
       }
     };
     reader.readAsText(file);
-    input.value = '';
+    input.value='';
   }
 
   function restoreFromFirebase() {
-    if (!confirm('¿Recargar todos los datos desde Firebase?\n\nEsto actualizará la app con los datos más recientes de la nube.')) return;
+    if(!confirm('¿Recargar todos los datos desde Firebase?')) return;
     setSyncBadge('syncing','Recargando…');
-    // Las suscripciones de Firestore ya están activas — forzar re-render
     renderAll();
-    setTimeout(function() {
+    setTimeout(function(){
       setSyncBadge('ok','En línea');
-      showToast('☁️','Datos recargados','Los datos se han sincronizado con Firebase correctamente.');
+      showToast('☁️','Datos recargados','Los datos se sincronizaron con Firebase correctamente.');
     }, 1500);
   }
 
@@ -1991,58 +2080,41 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
   function renderPartosSection() {
     var resLabel = { normal:'✅ Normal', dificil:'⚠️ Difícil', aborto:'❌ Aborto', muerto:'💀 Nac. muerto', cesarea:'🏥 Cesárea' };
     var sexoLabel = { hembra:'Hembra 🐄', macho:'Macho 🐂' };
-
-    // Contadores
-    var nNormal   = partos.filter(p=>p.resultado==='normal').length;
-    var nDificil  = partos.filter(p=>p.resultado==='dificil'||p.resultado==='cesarea').length;
-    var nAborto   = partos.filter(p=>p.resultado==='aborto').length;
-    var nMuerto   = partos.filter(p=>p.resultado==='muerto').length;
-    var nHembras  = partos.filter(p=>p.sexo==='hembra').length;
-    var nMachos   = partos.filter(p=>p.sexo==='macho').length;
-
-    var s = function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
-    s('parto-n-normal', nNormal);
-    s('parto-n-dificil', nDificil);
-    s('parto-n-abortos', nAborto);
-    s('parto-n-muertos', nMuerto);
-    s('parto-n-hembras', nHembras);
-    s('parto-n-machos', nMachos);
-
-    // Lista completa
+    var s = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+    s('parto-n-normal',  partos.filter(p=>p.resultado==='normal').length);
+    s('parto-n-dificil', partos.filter(p=>p.resultado==='dificil'||p.resultado==='cesarea').length);
+    s('parto-n-abortos', partos.filter(p=>p.resultado==='aborto').length);
+    s('parto-n-muertos', partos.filter(p=>p.resultado==='muerto').length);
+    s('parto-n-hembras', partos.filter(p=>p.sexo==='hembra').length);
+    s('parto-n-machos',  partos.filter(p=>p.sexo==='macho').length);
     var el = document.getElementById('partos-list-full');
-    if (!el) return;
-    if (!partos.length) {
-      el.innerHTML = '<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:16px">Sin partos registrados. Toca "+ Registrar" para agregar el primero.</div>';
-      return;
-    }
-    el.innerHTML = partos.map(function(p) {
-      var cls = 'parto-' + (p.resultado||'normal');
-      var sexoBadge = p.sexo ? ('<span style="display:inline-block;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:'+(p.sexo==='hembra'?'#E3F0FB':'#EEEDFE')+';color:'+(p.sexo==='hembra'?'#0C447C':'#3C3489')+';margin-left:6px">'+(sexoLabel[p.sexo]||p.sexo)+'</span>') : '';
+    if(!el) return;
+    if(!partos.length) { el.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary);text-align:center;padding:16px">Sin partos registrados. Toca "+ Registrar" para agregar el primero.</div>'; return; }
+    el.innerHTML = partos.map(function(p){
+      var cls='parto-'+(p.resultado||'normal');
+      var sexoBadge = p.sexo?('<span style="display:inline-block;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:'+(p.sexo==='hembra'?'#E3F0FB':'#EEEDFE')+';color:'+(p.sexo==='hembra'?'#0C447C':'#3C3489')+';margin-left:6px">'+(sexoLabel[p.sexo]||p.sexo)+'</span>'):'';
       return '<div style="padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
-        + '<div><span style="font-weight:600;font-size:13px;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</span>'+sexoBadge+'</div>'
-        + '<span class="parto-badge '+cls+'">'+(resLabel[p.resultado]||p.resultado||'—')+'</span>'
-        + '</div>'
-        + '<div style="font-size:11px;color:var(--color-text-secondary)">'
-        + p.fecha
-        + (p.pesoCria?' &nbsp;·&nbsp; Cría: '+p.pesoCria+' kg':'')
-        + (p.pesoMadre?' &nbsp;·&nbsp; Madre: '+p.pesoMadre+' kg':'')
-        + (p.atencion?' &nbsp;·&nbsp; '+p.atencion:'')
-        + '</div>'
-        + (p.obs?'<div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;font-style:italic">'+p.obs+'</div>':'')
-        + '</div>';
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
+        +'<div><span style="font-weight:600;font-size:13px;color:var(--color-text-primary)">🐄 '+(p.vaca||'—')+'</span>'+sexoBadge+'</div>'
+        +'<span class="parto-badge '+cls+'">'+(resLabel[p.resultado]||p.resultado||'—')+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--color-text-secondary)">'+p.fecha
+        +(p.pesoCria?' · Cría: '+p.pesoCria+' kg':'')
+        +(p.pesoMadre?' · Madre: '+p.pesoMadre+' kg':'')
+        +(p.atencion?' · '+p.atencion:'')+'</div>'
+        +(p.obs?'<div style="font-size:11px;color:var(--color-text-secondary);font-style:italic;margin-top:2px">'+p.obs+'</div>':'')
+        +'</div>';
     }).join('');
   }
 
-  /* ===== EXPORT PARTOS ===== */
+  /* ===== EXPORTAR PARTOS ===== */
   var _origExportExcel = exportExcel;
   exportExcel = function(sec) {
-    if (sec === 'partos') {
-      var fn = appConfig.nombre.replace(/\s+/g,'_');
-      var h = ['Vaca','Fecha','Resultado','Sexo cría','Peso cría (kg)','Peso madre (kg)','Atendido por','Observaciones'];
-      var r = partos.map(p=>[p.vaca,p.fecha,p.resultado,p.sexo||'',p.pesoCria||'',p.pesoMadre||'',p.atencion||'',p.obs||'']);
-      var csv = toCSV(h, r);
-      downloadBlob(csv, 'text/csv', fn+'_partos_'+today()+'.csv');
+    if(sec==='partos'){
+      var fn=appConfig.nombre.replace(/\s+/g,'_');
+      var h=['Vaca','Fecha','Resultado','Sexo cría','Peso cría (kg)','Peso madre (kg)','Atendido por','Observaciones'];
+      var r=partos.map(p=>[p.vaca,p.fecha,p.resultado,p.sexo||'',p.pesoCria||'',p.pesoMadre||'',p.atencion||'',p.obs||'']);
+      downloadBlob(toCSV(h,r),'text/csv',fn+'_partos_'+today()+'.csv');
       showToast('','Excel exportado','Partos descargado.');
       return;
     }
@@ -2050,33 +2122,27 @@ import { getFirestore, doc, setDoc, updateDoc, deleteDoc, addDoc, collection, on
   };
   var _origExportPDF = exportPDF;
   exportPDF = function(sec) {
-    if (sec === 'partos') {
-      var fn = appConfig.nombre; var ts = new Date().toLocaleDateString('es-CR'); var color = '#1D9E75';
-      var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+fn+' — Partos</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1916;padding:24px}h1{font-size:18px;color:'+color+'}h2{font-size:14px;color:'+color+';margin:16px 0 6px;border-bottom:1px solid #e3e2de;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:'+color+';color:#fff;padding:6px 8px;text-align:left}td{padding:5px 8px;border-bottom:0.5px solid #e3e2de}tr:nth-child(even) td{background:#f5f5f3}.sub{font-size:11px;color:#706f6b;margin-bottom:16px}</style></head><body>';
-      html += '<h1>'+fn+'</h1><div class="sub">Partos y nacimientos — Generado el '+ts+'</div>';
-      html += '<table><thead><tr><th>Vaca</th><th>Fecha</th><th>Resultado</th><th>Sexo cría</th><th>Peso cría</th><th>Peso madre</th><th>Atendido por</th><th>Observaciones</th></tr></thead><tbody>';
-      html += partos.map(p=>'<tr><td>'+p.vaca+'</td><td>'+p.fecha+'</td><td>'+p.resultado+'</td><td>'+(p.sexo||'—')+'</td><td>'+(p.pesoCria?p.pesoCria+' kg':'—')+'</td><td>'+(p.pesoMadre?p.pesoMadre+' kg':'—')+'</td><td>'+(p.atencion||'—')+'</td><td>'+(p.obs||'—')+'</td></tr>').join('');
-      html += '</tbody></table></body></html>';
-      if (!partos.length) html = html.replace('</tbody>','') + '<tr><td colspan="8" style="text-align:center;color:#706f6b">No hay partos registrados</td></tr></tbody>';
-      var w = window.open('','_blank','width=900,height=600'); w.document.write(html); w.document.close(); w.onload = function(){w.focus();w.print();};
+    if(sec==='partos'){
+      var fn=appConfig.nombre; var ts=new Date().toLocaleDateString('es-CR'); var color='#1D9E75';
+      var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+fn+' — Partos</title><style>body{font-family:Arial,sans-serif;font-size:12px;padding:24px}h1{color:'+color+'}h2{color:'+color+';border-bottom:1px solid #e3e2de;padding-bottom:4px}table{width:100%;border-collapse:collapse}th{background:'+color+';color:#fff;padding:6px 8px;text-align:left}td{padding:5px 8px;border-bottom:0.5px solid #e3e2de}tr:nth-child(even) td{background:#f5f5f3}.sub{font-size:11px;color:#706f6b;margin-bottom:16px}</style></head><body>';
+      html+='<h1>'+fn+'</h1><div class="sub">Partos y nacimientos — '+ts+'</div>';
+      html+='<h2>🐣 Partos registrados</h2><table><thead><tr><th>Vaca</th><th>Fecha</th><th>Resultado</th><th>Sexo</th><th>Peso cría</th><th>Peso madre</th><th>Atendido por</th><th>Obs.</th></tr></thead><tbody>';
+      if(!partos.length) html+='<tr><td colspan="8" style="text-align:center;color:#706f6b;padding:12px">No hay partos registrados</td></tr>';
+      else html+=partos.map(p=>'<tr><td>'+p.vaca+'</td><td>'+p.fecha+'</td><td>'+p.resultado+'</td><td>'+(p.sexo||'—')+'</td><td>'+(p.pesoCria?p.pesoCria+' kg':'—')+'</td><td>'+(p.pesoMadre?p.pesoMadre+' kg':'—')+'</td><td>'+(p.atencion||'—')+'</td><td>'+(p.obs||'—')+'</td></tr>').join('');
+      html+='</tbody></table></body></html>';
+      var w=window.open('','_blank','width=900,height=600'); w.document.write(html); w.document.close(); w.onload=function(){w.focus();w.print();};
       return;
     }
     _origExportPDF(sec);
   };
 
-  /* ===== RENDER ALL — extender para incluir partos section ===== */
+  /* ===== RENDER ALL — extender para sección partos ===== */
   var _origRenderAll = renderAll;
-  renderAll = function() {
-    _origRenderAll();
-    renderPartosSection();
-  };
+  renderAll = function() { _origRenderAll(); renderPartosSection(); };
 
-  /* ===== RENDER PARTOS — extender el original para también actualizar sección partos ===== */
+  /* ===== RENDER PARTOS — extender para también actualizar sección partos ===== */
   var _origRenderPartos = renderPartos;
-  renderPartos = function() {
-    _origRenderPartos();
-    renderPartosSection();
-  };
+  renderPartos = function() { _origRenderPartos(); renderPartosSection(); };
 
 
     var now=new Date();

@@ -105,11 +105,12 @@
       position:sticky;
       bottom:0;
       width:100%;
-      z-index:100;
+      z-index:200;           /* mayor que cualquier otro elemento */
       flex-shrink:0;
       overflow-x:auto;
-      box-shadow:0 -2px 12px rgba(0,0,0,.25);
+      box-shadow:0 -2px 12px rgba(0,0,0,.35);
       border-radius:0;
+      -webkit-tap-highlight-color:transparent;
     }
     .nav::-webkit-scrollbar { display:none; }
     .nav-btn {
@@ -1203,40 +1204,106 @@
   function col(name) { return collection(db, 'finca', 'datos', name); }
   function docRef(name, id) { return doc(db, 'finca', 'datos', name, String(id)); }
 
+  // ── Colección raíz legacy (datos viejos en "Animales")
+  function colLegacy(name) { return collection(db, name); }
+
   function subscribeToData() {
     setSyncBadge('syncing', 'Sincronizando…');
-    const onErr = (col, err) => { console.warn('Firestore listener ['+col+'] error:', err.code, err.message); };
+    var algoDatos = false; // bandera: si algún listener responde, ponemos "En línea"
+
+    function markOnline() {
+      if (!algoDatos) { algoDatos = true; setSyncBadge('ok', 'En línea'); }
+    }
+
+    // Timeout: si en 10 segundos ningún listener responde → error visible
+    var timeoutId = setTimeout(function() {
+      if (!algoDatos) {
+        setSyncBadge('error', 'Sin conexión');
+        showToast('⚠️', 'Sin conexión a Firebase',
+          'Verifique las reglas de Firestore y que su correo esté autorizado.');
+      }
+    }, 10000);
+
+    const onErr = function(colName, err) {
+      console.warn('Listener ['+colName+'] error:', err.code, err.message);
+      // Si TODOS fallan, mostrar error
+      setSyncBadge('error', 'Error: '+err.code);
+    };
+
     const subs = [
+      // ── Vacas en ruta nueva: finca/datos/cows
       onSnapshot(col('cows'),
-        snap => { cows = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderCows(); renderMainDash(); },
+        snap => {
+          var nuevas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          // Mezclar con vacas legacy sin duplicar
+          var idsNuevas = new Set(nuevas.map(c=>c.id));
+          cows = [...nuevas, ...cows.filter(c=>!idsNuevas.has(c.id))];
+          renderCows(); renderMainDash(); markOnline(); clearTimeout(timeoutId);
+        },
         err => onErr('cows', err)
       ),
+      // ── Vacas legacy: colección "Animales" en la raíz (datos viejos)
+      onSnapshot(colLegacy('Animales'),
+        snap => {
+          if (snap.empty) return;
+          var legacy = snap.docs.map(d => ({ id:'leg_'+d.id, ...d.data(),
+            // Mapear campos con nombre diferente
+            name: d.data().Nombre || d.data().name || '—',
+            arete: d.data()['Número de Arete'] || d.data().arete || '—',
+            tipo: d.data().Tipo || d.data().tipo || 'Vaca',
+            raza: d.data().Raza || d.data().raza || '—',
+            estado: d.data().Estado || d.data().estado || 'Activa',
+            partos: parseInt(d.data()['Número de parto']||d.data().partos||0),
+            peso: parseFloat(d.data().Peso||d.data().peso||0),
+            nacimiento: d.data()['Fecha de nacimiento']||d.data().nacimiento||'',
+            litros: 0, produccion: 0, foto: ''
+          }));
+          // Solo agregar las que NO están ya en la ruta nueva
+          var idsActuales = new Set(cows.filter(c=>!c.id.startsWith('leg_')).map(c=>c.arete));
+          var nuevasLegacy = legacy.filter(c=>!idsActuales.has(c.arete));
+          if (nuevasLegacy.length) {
+            cows = [...cows.filter(c=>!c.id.startsWith('leg_')), ...nuevasLegacy];
+            renderCows(); renderMainDash();
+          }
+          markOnline(); clearTimeout(timeoutId);
+        },
+        err => console.warn('Listener legacy [Animales]:', err.code)
+      ),
       onSnapshot(col('lecheReg'),
-        snap => { lecheReg = snap.docs.map(d => ({ ...d.data() })).sort((a, b) => b.fecha.localeCompare(a.fecha)); renderLeche(); },
+        snap => {
+          lecheReg = snap.docs.map(d => ({ ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
+          renderLeche(); markOnline();
+        },
         err => onErr('lecheReg', err)
       ),
       onSnapshot(col('vetReg'),
-        snap => { vetReg = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.fecha.localeCompare(a.fecha)); renderVet(); },
+        snap => {
+          vetReg = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
+          renderVet(); markOnline();
+        },
         err => onErr('vetReg', err)
       ),
       onSnapshot(col('bajas'),
-        snap => { bajas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.fecha.localeCompare(a.fecha)); renderBajas(); },
+        snap => {
+          bajas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
+          renderBajas(); markOnline();
+        },
         err => onErr('bajas', err)
       ),
       onSnapshot(col('entregas'),
         snap => {
-          entregas = snap.docs.map(d => ({ ...d.data(), id: d.id })).sort((a, b) => b.fecha.localeCompare(a.fecha));
+          entregas = snap.docs.map(d => ({ ...d.data(), id: d.id })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
           updateProdMetrics(); renderEntregaTable();
-          renderBarChart('prod-main-chart', entregas.slice(0,7).map(e=>e.litros).reverse(), entregas.slice(0,7).map(e=>e.fecha.slice(5)).reverse(), 'var(--accent)', 130, true);
-          renderTrend(); renderMainDash();
-          setSyncBadge('ok', 'En línea');
+          renderBarChart('prod-main-chart', entregas.slice(0,7).map(e=>e.litros).reverse(),
+            entregas.slice(0,7).map(e=>e.fecha.slice(5)).reverse(), 'var(--accent)', 130, true);
+          renderTrend(); renderMainDash(); markOnline(); clearTimeout(timeoutId);
         },
         err => { setSyncBadge('error', 'Error'); onErr('entregas', err); }
       ),
       onSnapshot(col('partos'),
         snap => {
-          partos = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.fecha.localeCompare(a.fecha));
-          renderPartos(); renderMainDash();
+          partos = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
+          renderPartos(); renderMainDash(); markOnline();
         },
         err => onErr('partos', err)
       )
@@ -1388,25 +1455,24 @@
 
   /* ===== NAVEGACIÓN ===== */
   function showSection(id, btn) {
-    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    var sec = document.getElementById('sec-'+id);
-    if (sec) { sec.classList.add('active'); }
-    // Si no se pasó btn directamente, buscar el nav-btn que corresponde
-    if (btn) {
-      btn.classList.add('active');
-    } else {
-      // Buscar el botón del nav que corresponde a esta sección por su onclick
-      var navBtns = document.querySelectorAll('#main-nav .nav-btn');
-      navBtns.forEach(function(b) {
-        if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+id+"'") !== -1) {
-          b.classList.add('active');
-        }
-      });
-    }
-    // Scroll el área de contenido al tope al cambiar de sección
-    var content = document.querySelector('.content');
-    if (content) content.scrollTop = 0;
+    try {
+      document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+      document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+      var sec = document.getElementById('sec-'+id);
+      if (sec) { sec.classList.add('active'); }
+      if (btn) {
+        btn.classList.add('active');
+      } else {
+        document.querySelectorAll('#main-nav .nav-btn').forEach(function(b){
+          if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+id+"'") > -1) {
+            b.classList.add('active');
+          }
+        });
+      }
+      // Scroll al tope del contenido al cambiar sección
+      var content = document.querySelector('.content');
+      if (content) content.scrollTop = 0;
+    } catch(e) { console.error('showSection error:', e); }
   }
 
   /* ===== GRÁFICOS ===== */

@@ -1119,15 +1119,17 @@
   </div>
 </div>
 
-<!-- ===== FIREBASE SDK ===== -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, deleteDoc, updateDoc, getDocs }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- ===== FIREBASE SDK — COMPAT (sin módulos, funciona en todo iOS) ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  const firebaseConfig = {
+<script>
+  /* ===== DATOS EN MEMORIA ===== */
+  var cows = [], lecheReg = [], vetReg = [], bajas = [], entregas = [], partos = [];
+
+  /* ===== FIREBASE INIT ===== */
+  var firebaseConfig = {
     apiKey: "AIzaSyAISQ_p-BFAS4zdvYKSlAMUGf84cGfEQLM",
     authDomain: "wg-e-hijos.firebaseapp.com",
     projectId: "wg-e-hijos",
@@ -1135,36 +1137,31 @@
     messagingSenderId: "972914678626",
     appId: "1:972914678626:web:3206b02c754ab3ab486a3b"
   };
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+  var db   = firebase.firestore();
+  var unsubListeners = [];
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
-
-  let unsubListeners = [];
-  let currentUser = null;
-
-  window.signInWithGoogle = async function () {
+  /* ===== AUTH ===== */
+  window.signInWithGoogle = function() {
     document.getElementById('login-loading').style.display = 'block';
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
+    var provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(function(e) {
       document.getElementById('login-loading').style.display = 'none';
       alert('Error al iniciar sesión: ' + e.message);
-    }
+    });
   };
 
-  window.signOutUser = async function () {
-    unsubListeners.forEach(u => u());
+  window.signOutUser = function() {
+    unsubListeners.forEach(function(u){ try{ u(); }catch(e){} });
     unsubListeners = [];
-    await signOut(auth);
+    auth.signOut();
     closeModal('modal-user');
-    cows = []; lecheReg = []; vetReg = []; bajas = []; entregas = []; partos = [];
+    cows=[]; lecheReg=[]; vetReg=[]; bajas=[]; entregas=[]; partos=[];
   };
 
-  onAuthStateChanged(auth, user => {
+  auth.onAuthStateChanged(function(user) {
     if (user) {
-      currentUser = user;
       document.getElementById('login-screen').classList.add('hidden');
       updateUserUI(user);
       subscribeToData();
@@ -1173,9 +1170,8 @@
       updateHeader();
       checkInstallBanner();
       var ef = document.getElementById('ent-fecha');
-      if (ef) ef.value = new Date().toISOString().split('T')[0];
+      if (ef && !ef.value) ef.value = new Date().toISOString().split('T')[0];
     } else {
-      currentUser = null;
       document.getElementById('login-screen').classList.remove('hidden');
       document.getElementById('login-loading').style.display = 'none';
     }
@@ -1184,225 +1180,175 @@
   function updateUserUI(user) {
     var wrap = document.getElementById('user-avatar-wrap');
     if (user.photoURL) {
-      wrap.innerHTML = '<img class="user-avatar" src="' + user.photoURL + '" alt="' + (user.displayName||'') + '" onclick="openModal(\'modal-user\')">';
+      wrap.innerHTML = '<img class="user-avatar" src="'+user.photoURL+'" onclick="openModal(\'modal-user\')">';
     } else {
-      var initials = (user.displayName || user.email || '?').charAt(0).toUpperCase();
-      wrap.innerHTML = '<div class="user-avatar-placeholder" onclick="openModal(\'modal-user\')">' + initials + '</div>';
+      var i = (user.displayName||user.email||'?').charAt(0).toUpperCase();
+      wrap.innerHTML = '<div class="user-avatar-placeholder" onclick="openModal(\'modal-user\')">'+i+'</div>';
     }
-    var mWrap = document.getElementById('user-modal-avatar-wrap');
-    if (user.photoURL) {
-      mWrap.innerHTML = '<img class="user-menu-avatar" src="' + user.photoURL + '">';
-    } else {
-      var init2 = (user.displayName || user.email || '?').charAt(0).toUpperCase();
-      mWrap.innerHTML = '<div class="user-menu-avatar-ph">' + init2 + '</div>';
-    }
-    document.getElementById('user-modal-name').textContent = user.displayName || 'Usuario';
-    document.getElementById('user-modal-email').textContent = user.email || '';
-  }
-
-  function col(name) { return collection(db, 'finca', 'datos', name); }
-  function docRef(name, id) { return doc(db, 'finca', 'datos', name, String(id)); }
-
-  // ── Colección raíz legacy (datos viejos en "Animales")
-  function colLegacy(name) { return collection(db, name); }
-
-  function subscribeToData() {
-    setSyncBadge('syncing', 'Sincronizando…');
-    var algoDatos = false; // bandera: si algún listener responde, ponemos "En línea"
-
-    function markOnline() {
-      if (!algoDatos) { algoDatos = true; setSyncBadge('ok', 'En línea'); }
-    }
-
-    // Timeout: si en 30 segundos ningún listener responde → error visible
-    var timeoutId = setTimeout(function() {
-      if (!algoDatos) {
-        setSyncBadge('error', 'Sin conexión');
-        showToast('⚠️', 'Sin conexión a Firebase',
-          'Posible causa: el nuevo dominio jdguti1985-dotcom.github.io/Finca-WG-Hijos no está autorizado en Firebase → Authentication → Configuración → Dominios autorizados.');
+    var mw = document.getElementById('user-modal-avatar-wrap');
+    if (mw) {
+      if (user.photoURL) {
+        mw.innerHTML = '<img class="user-menu-avatar" src="'+user.photoURL+'">';
+      } else {
+        var i2 = (user.displayName||user.email||'?').charAt(0).toUpperCase();
+        mw.innerHTML = '<div class="user-menu-avatar-ph">'+i2+'</div>';
       }
-    }, 30000);
-
-    const onErr = function(colName, err) {
-      console.warn('Listener ['+colName+'] error:', err.code, err.message);
-      // Si TODOS fallan, mostrar error
-      setSyncBadge('error', 'Error: '+err.code);
-    };
-
-    const subs = [
-      // ── Vacas en ruta nueva: finca/datos/cows
-      onSnapshot(col('cows'),
-        snap => {
-          var nuevas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          // Mezclar con vacas legacy sin duplicar
-          var idsNuevas = new Set(nuevas.map(c=>c.id));
-          cows = [...nuevas, ...cows.filter(c=>!idsNuevas.has(c.id))];
-          renderCows(); renderMainDash(); markOnline(); clearTimeout(timeoutId);
-        },
-        err => onErr('cows', err)
-      ),
-      // ── Vacas legacy: colección "Animales" en la raíz (datos viejos)
-      onSnapshot(colLegacy('Animales'),
-        snap => {
-          if (snap.empty) return;
-          var legacy = snap.docs.map(d => ({ id:'leg_'+d.id, ...d.data(),
-            // Mapear campos con nombre diferente
-            name: d.data().Nombre || d.data().name || '—',
-            arete: d.data()['Número de Arete'] || d.data().arete || '—',
-            tipo: d.data().Tipo || d.data().tipo || 'Vaca',
-            raza: d.data().Raza || d.data().raza || '—',
-            estado: d.data().Estado || d.data().estado || 'Activa',
-            partos: parseInt(d.data()['Número de parto']||d.data().partos||0),
-            peso: parseFloat(d.data().Peso||d.data().peso||0),
-            nacimiento: d.data()['Fecha de nacimiento']||d.data().nacimiento||'',
-            litros: 0, produccion: 0, foto: ''
-          }));
-          // Solo agregar las que NO están ya en la ruta nueva
-          var idsActuales = new Set(cows.filter(c=>!c.id.startsWith('leg_')).map(c=>c.arete));
-          var nuevasLegacy = legacy.filter(c=>!idsActuales.has(c.arete));
-          if (nuevasLegacy.length) {
-            cows = [...cows.filter(c=>!c.id.startsWith('leg_')), ...nuevasLegacy];
-            renderCows(); renderMainDash();
-          }
-          markOnline(); clearTimeout(timeoutId);
-        },
-        err => console.warn('Listener legacy [Animales]:', err.code)
-      ),
-      onSnapshot(col('lecheReg'),
-        snap => {
-          lecheReg = snap.docs.map(d => ({ ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
-          renderLeche(); markOnline();
-        },
-        err => onErr('lecheReg', err)
-      ),
-      onSnapshot(col('vetReg'),
-        snap => {
-          vetReg = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
-          renderVet(); markOnline();
-        },
-        err => onErr('vetReg', err)
-      ),
-      onSnapshot(col('bajas'),
-        snap => {
-          bajas = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
-          renderBajas(); markOnline();
-        },
-        err => onErr('bajas', err)
-      ),
-      onSnapshot(col('entregas'),
-        snap => {
-          entregas = snap.docs.map(d => ({ ...d.data(), id: d.id })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
-          updateProdMetrics(); renderEntregaTable();
-          renderBarChart('prod-main-chart', entregas.slice(0,7).map(e=>e.litros).reverse(),
-            entregas.slice(0,7).map(e=>e.fecha.slice(5)).reverse(), 'var(--accent)', 130, true);
-          renderTrend(); renderMainDash(); markOnline(); clearTimeout(timeoutId);
-        },
-        err => { setSyncBadge('error', 'Error'); onErr('entregas', err); }
-      ),
-      onSnapshot(col('partos'),
-        snap => {
-          partos = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha||'').localeCompare(a.fecha||''));
-          renderPartos(); renderMainDash(); markOnline();
-        },
-        err => onErr('partos', err)
-      )
-    ];
-    unsubListeners.push(...subs);
+    }
+    var n = document.getElementById('user-modal-name');   if(n) n.textContent = user.displayName||'Usuario';
+    var e = document.getElementById('user-modal-email');  if(e) e.textContent = user.email||'';
   }
 
+  /* ===== FIRESTORE HELPERS ===== */
+  function col(name)         { return db.collection('finca').doc('datos').collection(name); }
+  function docRef(name, id)  { return col(name).doc(String(id)); }
+  function colLegacy(name)   { return db.collection(name); }
+
+  /* ===== SYNC BADGE ===== */
   function setSyncBadge(state, txt) {
     var b = document.getElementById('sync-badge');
     var t = document.getElementById('sync-txt');
-    if (!b || !t) return;
-    b.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+    if (!b||!t) return;
+    b.className = 'sync-dot'+(state==='syncing'?' syncing':state==='error'?' error':'');
     t.textContent = txt;
   }
 
-  window.saveAll = function () {};
+  /* ===== SUBSCRIBE ===== */
+  function subscribeToData() {
+    setSyncBadge('syncing', 'Sincronizando…');
+    var online = false;
+    function markOnline() {
+      if (!online) { online=true; setSyncBadge('ok','En línea'); }
+    }
 
-  window.fbAddCow = async function (cow) {
-    setSyncBadge('syncing', 'Guardando…');
+    var tid = setTimeout(function() {
+      if (!online) {
+        setSyncBadge('error','Sin conexión');
+        showToast('⚠️','Sin conexión','Verifique internet y las reglas de Firestore.');
+      }
+    }, 20000);
+
+    function onErr(name, err) {
+      console.warn('Listener ['+name+']:', err.code, err.message);
+    }
+
+    unsubListeners.push(
+      col('cows').onSnapshot(function(snap) {
+        cows = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+        renderCows(); renderMainDash(); markOnline(); clearTimeout(tid);
+      }, function(err){ onErr('cows',err); }),
+
+      colLegacy('Animales').onSnapshot(function(snap) {
+        if (snap.empty) return;
+        var legacy = snap.docs.map(function(d) {
+          var x = d.data();
+          return { id:'leg_'+d.id,
+            name: x.Nombre||x.name||'—',
+            arete: x['Número de Arete']||x.arete||'—',
+            tipo: x.Tipo||x.tipo||'Vaca',
+            raza: x.Raza||x.raza||'—',
+            estado: x.Estado||x.estado||'Activa',
+            partos: parseInt(x['Número de parto']||x.partos||0),
+            peso: parseFloat(x.Peso||x.peso||0),
+            nacimiento: x['Fecha de nacimiento']||x.nacimiento||'',
+            litros:0, produccion:0, foto:'' };
+        });
+        var aretes = new Set(cows.filter(function(c){ return !c.id.startsWith('leg_'); }).map(function(c){ return c.arete; }));
+        var nuevas = legacy.filter(function(c){ return !aretes.has(c.arete); });
+        if (nuevas.length) {
+          cows = cows.filter(function(c){ return !c.id.startsWith('leg_'); }).concat(nuevas);
+          renderCows(); renderMainDash();
+        }
+        markOnline(); clearTimeout(tid);
+      }, function(err){ onErr('Animales',err); }),
+
+      col('lecheReg').onSnapshot(function(snap) {
+        lecheReg = snap.docs.map(function(d){ return d.data(); })
+          .sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+        renderLeche(); markOnline();
+      }, function(err){ onErr('lecheReg',err); }),
+
+      col('vetReg').onSnapshot(function(snap) {
+        vetReg = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); })
+          .sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+        renderVet(); markOnline();
+      }, function(err){ onErr('vetReg',err); }),
+
+      col('bajas').onSnapshot(function(snap) {
+        bajas = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); })
+          .sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+        renderBajas(); markOnline();
+      }, function(err){ onErr('bajas',err); }),
+
+      col('entregas').onSnapshot(function(snap) {
+        entregas = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); })
+          .sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+        updateProdMetrics(); renderEntregaTable();
+        renderBarChart('prod-main-chart',
+          entregas.slice(0,7).map(function(e){return e.litros;}).reverse(),
+          entregas.slice(0,7).map(function(e){return e.fecha?e.fecha.slice(5):'';}).reverse(),
+          'var(--accent)',130,true);
+        renderTrend(); renderMainDash(); markOnline(); clearTimeout(tid);
+      }, function(err){ setSyncBadge('error','Error'); onErr('entregas',err); }),
+
+      col('partos').onSnapshot(function(snap) {
+        partos = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); })
+          .sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+        renderPartos(); renderMainDash(); markOnline();
+      }, function(err){ onErr('partos',err); })
+    );
+  }
+
+  /* ===== FIREBASE CRUD ===== */
+  window.fbAddCow = async function(cow) {
+    setSyncBadge('syncing','Guardando…');
     try {
       var id = String(Date.now());
       cow.id = id;
-      // Si la foto sigue siendo muy grande, la eliminamos antes de guardar
-      var cowParaGuardar = Object.assign({}, cow);
-      if (cowParaGuardar.foto && cowParaGuardar.foto.length > 700000) {
-        console.warn('Foto demasiado grande aun después de comprimir — se guarda sin foto');
-        cowParaGuardar.foto = '';
-      }
-      await setDoc(docRef('cows', id), cowParaGuardar);
-      setSyncBadge('ok', 'En línea');
-    } catch(e) {
-      setSyncBadge('error', 'Error al guardar');
-      console.error('fbAddCow error:', e.code, e.message);
-      throw e; // re-lanzar para que addCow lo muestre al usuario
-    }
-  };
-  window.fbUpdateCow = async function (cow) {
-    try {
-      var cowParaGuardar = Object.assign({}, cow);
-      if (cowParaGuardar.foto && cowParaGuardar.foto.length > 700000) {
-        cowParaGuardar.foto = '';
-      }
-      await setDoc(docRef('cows', String(cow.id)), cowParaGuardar);
-    } catch(e) {
-      console.error('fbUpdateCow error:', e.code, e.message);
-      throw e;
-    }
-  };
-  window.fbDeleteCow = async function (id) { await deleteDoc(docRef('cows', String(id))); };
-  window.fbAddLeche = async function (reg) { setSyncBadge('syncing','Guardando…'); await addDoc(col('lecheReg'), reg); };
-  window.fbAddVet = async function (reg) { setSyncBadge('syncing','Guardando…'); await addDoc(col('vetReg'), reg); };
-  window.fbDeleteVet = async function (id) { await deleteDoc(docRef('vetReg', id)); };
-  window.fbAddBaja = async function (reg) { setSyncBadge('syncing','Guardando…'); await addDoc(col('bajas'), reg); };
-  window.fbAddEntrega = async function (reg) {
-    setSyncBadge('syncing','Guardando…');
-    var id = String(Date.now());
-    reg.id = id;
-    await setDoc(docRef('entregas', id), reg);
-  };
-  window.fbDeleteEntrega = async function (id) { await deleteDoc(docRef('entregas', String(id))); };
-  window.fbAddParto = async function (reg) {
-    setSyncBadge('syncing','Guardando…');
-    try {
-      await addDoc(col('partos'), reg);
+      if (cow.foto && cow.foto.length > 700000) cow.foto = '';
+      await col('cows').doc(id).set(cow);
       setSyncBadge('ok','En línea');
     } catch(e) { setSyncBadge('error','Error'); throw e; }
   };
-  window.fbUpdateCowBaja = async function (cowName) {
+  window.fbUpdateCow = async function(cow) {
     try {
-      var cowsSnap = await getDocs(col('cows'));
-      for (const d of cowsSnap.docs) {
+      var c = Object.assign({}, cow);
+      if (c.foto && c.foto.length > 700000) c.foto = '';
+      await col('cows').doc(String(cow.id)).set(c);
+    } catch(e) { throw e; }
+  };
+  window.fbDeleteCow    = async function(id) { await col('cows').doc(String(id)).delete(); };
+  window.fbAddLeche     = async function(r)  { setSyncBadge('syncing','Guardando…'); await col('lecheReg').add(r); };
+  window.fbAddVet       = async function(r)  { setSyncBadge('syncing','Guardando…'); await col('vetReg').add(r); };
+  window.fbDeleteVet    = async function(id) { await col('vetReg').doc(id).delete(); };
+  window.fbAddBaja      = async function(r)  { setSyncBadge('syncing','Guardando…'); await col('bajas').add(r); };
+  window.fbAddEntrega   = async function(r)  {
+    setSyncBadge('syncing','Guardando…');
+    var id = String(Date.now()); r.id = id;
+    await col('entregas').doc(id).set(r);
+  };
+  window.fbDeleteEntrega = async function(id) { await col('entregas').doc(String(id)).delete(); };
+  window.fbAddParto     = async function(r)  {
+    setSyncBadge('syncing','Guardando…');
+    try { await col('partos').add(r); setSyncBadge('ok','En línea'); }
+    catch(e) { setSyncBadge('error','Error'); throw e; }
+  };
+  window.fbUpdateCowBaja = async function(cowName) {
+    try {
+      var snap = await col('cows').get();
+      for (var d of snap.docs) {
         if (d.data().name === cowName) {
-          await updateDoc(doc(db, 'finca', 'datos', 'cows', d.id), { estado: 'Baja' });
+          await col('cows').doc(d.id).update({ estado:'Baja' });
         }
       }
-    } catch(e) { console.error('Error al dar de baja:', e); }
+    } catch(e) { console.error('Error baja:', e); }
   };
 
-  window.seedIfEmpty = async function () {
-    var snap = await getDocs(col('cows'));
-    if (!snap.empty) return;
-    var DEFAULTS_COWS = [
-      { name:'Lucera', arete:'CR-1021', tipo:'Vaca', raza:'Jersey', estado:'Activa', litros:18.5, produccion:18, partos:3, peso:390, nacimiento:'2020-05-12', ultparto:'2025-11-03', obs:'Excelente productora' },
-      { name:'Princesa', arete:'CR-1045', tipo:'Vaca', raza:'Holstein', estado:'Lactante', litros:22.0, produccion:22, partos:4, peso:510, nacimiento:'2019-08-20', ultparto:'2025-09-15', obs:'' },
-      { name:'Bella', arete:'CR-1067', tipo:'Vaca', raza:'Pardo Suizo', estado:'Preñada', litros:14.0, produccion:14, partos:2, peso:440, nacimiento:'2021-03-01', ultparto:'2025-03-01', obs:'Parto esperado mayo 2026' },
-      { name:'Mora', arete:'CR-1089', tipo:'Vaca', raza:'Jersey', estado:'Activa', litros:16.5, produccion:16, partos:1, peso:360, nacimiento:'2022-07-14', ultparto:'2025-12-20', obs:'' },
-      { name:'Estrella', arete:'CR-1102', tipo:'Vaca', raza:'Holstein', estado:'Seca', litros:0, produccion:0, partos:5, peso:530, nacimiento:'2018-02-28', ultparto:'2025-08-10', obs:'En período seco' },
-      { name:'Don Fuerte', arete:'CR-0010', tipo:'Toro', raza:'Brahman', estado:'Otro', litros:0, produccion:0, partos:0, peso:780, nacimiento:'2017-11-05', ultparto:'', obs:'Reproductor principal' }
-    ];
-    for (var c of DEFAULTS_COWS) {
-      var id = String(Date.now() + Math.random());
-      c.id = id;
-      await setDoc(docRef('cows', id), c);
-    }
-  };
+
+
 </script>
 
 <script>
   /* ===== DATOS EN MEMORIA ===== */
-  var cows = [], lecheReg = [], vetReg = [], bajas = [], entregas = [], partos = [];
 
   /* ===== CONFIGURACIÓN ===== */
   var CFG_KEY = 'finca-config';

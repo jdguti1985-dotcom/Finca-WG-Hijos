@@ -1417,7 +1417,7 @@
   function loadConfig() {
     try { var raw = localStorage.getItem(CFG_KEY); if (raw) appConfig = Object.assign(appConfig, JSON.parse(raw)); } catch(e){}
   }
-  function saveConfig() {
+  window.saveConfig = function saveConfig() {
     appConfig.nombre = document.getElementById('cfg-nombre').value.trim() || 'Finca Santa Rosa';
     appConfig.propietario = document.getElementById('cfg-propietario').value.trim();
     appConfig.nfinca = document.getElementById('cfg-nfinca').value.trim();
@@ -1449,11 +1449,11 @@
     ['verde','azul','cafe','oscuro'].forEach(t=>{ var sw=document.getElementById('sw-'+t); if(sw) sw.classList.toggle('selected',appConfig.tema===t); });
     ['pequena','normal','grande'].forEach(f=>{ var fo=document.getElementById('fo-'+f); if(fo) fo.classList.toggle('selected',appConfig.fuente===f); });
   }
-  function selectTheme(t) { appConfig.tema=t; applyConfig(); }
-  function selectFontSize(f) { appConfig.fuente=f; applyConfig(); }
+  window.selectTheme = function selectTheme(t) { appConfig.tema=t; applyConfig(); }
+  window.selectFontSize = function selectFontSize(f) { appConfig.fuente=f; applyConfig(); }
 
   /* ===== NAVEGACIÓN ===== */
-  function showSection(id, btn) {
+  window.showSection = function showSection(id, btn) {
     try {
       document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
       document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -1468,7 +1468,6 @@
           }
         });
       }
-      // Scroll al tope del contenido al cambiar sección
       var content = document.querySelector('.content');
       if (content) content.scrollTop = 0;
     } catch(e) { console.error('showSection error:', e); }
@@ -1734,7 +1733,7 @@
       return '<div class="cow-card" onclick="showCow(\''+c.id+'\')">'+fotoHtml+'<div class="cow-header"><div class="cow-avatar">🐄</div><div><div class="cow-name">'+c.name+'</div><div class="cow-arete">'+c.arete+' · '+c.tipo+'</div></div></div><div style="margin-bottom:4px"><span class="badge '+(badgeClass[c.estado]||'badge-otro')+'">'+c.estado+'</span></div>'+prodChip+'<div class="cow-stat" style="margin-top:6px">'+c.raza+' <span>'+(c.litros>0?c.litros.toFixed(1)+' L hoy':'—')+'</span></div></div>';
     }).join('');
   }
-  function filterCows(v) { renderCows(v); }
+  window.filterCows = function filterCows(v) { renderCows(v); }
 
   function showCow(id) {
     var c=cows.find(x=>x.id===id||String(x.id)===String(id)); if(!c) return;
@@ -1832,8 +1831,8 @@
     var t=new Date().toISOString().split('T')[0];
     ['leche-fecha','vet-fecha','baja-fecha','ent-fecha','parto-fecha'].forEach(id=>{var x=document.getElementById(id); if(x&&!x.value) x.value=t;});
   }
-  function openModal(id) { populateSelects(); document.getElementById(id).classList.add('open'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  window.openModal = function openModal(id) { populateSelects(); document.getElementById(id).classList.add('open'); }
+  window.closeModal = function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
   function showToast(icon, title, msg) {
     document.getElementById('toast-icon').textContent=icon||'';
@@ -1881,7 +1880,7 @@
   var currentCowId = null;
   var editFotoBase64 = null;
 
-  function openEditCow(id) {
+  window.openEditCow = function openEditCow(id) {
     var c = cows.find(x => x.id === id || String(x.id) === String(id));
     if (!c) return;
     currentCowId = c.id;
